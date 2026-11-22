@@ -91,7 +91,60 @@
       </div>
     </div>
   </header>
-</div>
+
+  <main id="main">
+
+    <!-- home page -->
+    <div v-if="view === 'home'">
+      <section class="hero">
+        <svg class="sticker deco deco-1" viewBox="0 0 100 100" color="#7DB7FF">
+          <use href="#sticker-squiggle"/>
+        </svg>
+        <svg class="sticker deco deco-2" viewBox="0 0 100 100" color="#3DA66F">
+          <use href="#sticker-spark"/>
+        </svg>
+        <svg class="sticker deco deco-3" viewBox="0 0 100 100" color="#FF8FA6">
+          <use href="#sticker-squiggle"/>
+        </svg>
+        <svg class="sticker deco deco-4" viewBox="0 0 100 100" color="#FFD45C">
+          <use href="#sticker-burst"/>
+        </svg>
+        <div class="container hero-inner">
+          <p class="eyebrow">After-school classes could be fun!</p>
+          <h1 class="hero-title">
+            <span class="hl">Big interests</span>
+            <span class="hero-line">
+              <span class="star-box">
+                <i class="fa-solid fa-star-of-life"></i>
+              </span> start with <span class="star-box">
+                <i class="fa-solid fa-star-of-life"></i>
+              </span>
+            </span>
+            <span class="hero-line">a little <em>curiosity!</em></span>
+          </h1>
+          <svg class="scribble" viewBox="0 0 320 24">
+            <path d="M6 14 C 90 2, 180 20, 314 6" />
+            <path d="M30 20 C 110 10, 210 21, 290 13" />
+          </svg>
+          <p class="lead">Try a mini taste of every class, meet the teachers, read honest reviews and book the activities your family will look forward to.</p>
+          <div class="hero-actions">
+            <button class="btn btn-yellow btn-lg" v-on:click="go('quiz')"> Find your fit 
+                    <span class="btn-dot">
+                      <i class="fa-solid fa-arrow-up-right-from-square"></i>
+                    </span>
+            </button>
+            <button class="btn btn-ghost btn-lg" v-on:click="go('explore')">Explore all classes</button>
+          </div>
+          <ul class="hero-bubbles">
+            <li v-for="(t, i) in heroTiles" :key="i">
+              <svg class="sticker" viewBox="0 0 100 100" :color="t.colour">
+                <use :href="'#sticker-' + t.sticker"/>
+              </svg>
+              <i :class="['fa-solid', t.icon]"></i>
+            </li>
+          </ul>
+        </div>
+      </section>
 
       <section class="section">
         <div class="container">
@@ -137,6 +190,21 @@
         </div>
       </section>
 
+      <section class="section" v-if="!showPicks">
+        <div class="container">
+          <div class="promo">
+            <div>
+              <p class="eyebrow">1-minute quiz</p>
+              <h2>Not sure where to start?</h2>
+              <p>Answer five quick questions and we will suggest the classes that match their age, interests and energy.</p>
+            </div>
+            <button class="btn btn-brown btn-lg" v-on:click="go('quiz')">Take the quiz 
+              <span class="btn-dot light"><i class="fa-solid fa-arrow-right"></i></span>
+            </button>
+          </div>
+        </div>
+      </section>
+
       <section class="section tint">
         <div class="container">
           <div class="section-head">
@@ -156,7 +224,85 @@
           </div>
         </div>
       </section>
-      
+    <div v-if="view === 'home'">
+      <section class="section tint">
+        <div class="container">
+          <h2 class="center-title"><span class="flower-word">Why</span> families love Wonderly</h2>
+          <div class="feature-stack">
+            <article v-for="f in features" :key="f.title" class="feature-banner" :class="f.cls">
+              <div><h3>{{ f.title }}</h3><p>{{ f.text }}</p></div>
+              <div class="feature-art">
+                <svg class="sticker" viewBox="0 0 100 100" color="#FFD45C">
+                  <use href="#sticker-flower"/>
+                </svg>
+                <i :class="['fa-solid', f.icon]"></i>
+              </div>
+            </article>
+          </div>
+        </div>
+      </section>
+
+      <section class="section">
+        <div class="container">
+          <div class="section-head row">
+            <div>
+              <p class="eyebrow">Meet the teachers</p>
+              <h2>Friendly experts, real passion</h2>
+            </div>
+            <button class="btn btn-ghost" v-on:click="go('teachers')">All teachers</button>
+          </div>
+          <div class="teacher-grid">
+            <article v-for="(t, i) in featuredTeachers" :key="t._id" class="teacher-card">
+              <div class="avatar-wrap">
+                <svg class="sticker" viewBox="0 0 100 100" :color="teacherColours[i % teacherColours.length]">
+                  <use href="#sticker-flower"/>
+                </svg>
+                <span class="avatar-initials">{{ t.firstName[0] }}{{ t.lastName[0] }}</span>
+                <img class="avatar-photo" v-if="t.image" :src="imageUrl(t.image)" v-on:error="$event.target.style.display='none'">
+              </div>
+              <h3>{{ t.firstName }} {{ t.lastName }}</h3>
+              <p class="speciality">{{ t.speciality }}</p>
+              <p class="bio">{{ t.bio }}</p>
+              <button class="btn btn-ghost" v-on:click="openTeacher(t._id)">
+                View {{ lessonCountFor(t._id) }} {{ lessonCountFor(t._id) === 1 ? 'lesson' : 'lessons' }} <i class="fa-solid fa-arrow-right"></i>
+              </button>
+            </article>
+          </div>
+        </div>
+      </section>
+
+      <section class="section">
+        <div class="container">
+          <div class="parents">
+            <div v-for="p in parentPoints" :key="p.title" class="parent-point">
+              <i :class="['fa-solid', p.icon]"></i>
+              <h3>{{ p.title }}</h3><p>{{ p.text }}</p>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section class="section">
+        <div class="container">
+          <div class="cta-band">
+            <svg class="sticker cta-sticker" viewBox="0 0 100 100" color="#3DA66F">
+              <use href="#sticker-burst"/>
+            </svg>
+            <div>
+              <h2>Create a free profile</h2>
+              <p>Track every booking, rate the classes you have taken and keep your picks in one place.</p>
+            </div>
+            <button class="btn btn-yellow btn-lg" v-if="!user" v-on:click="openAuth('signup')">Sign up free</button>
+            <button class="btn btn-yellow btn-lg" v-else v-on:click="go('profile')">Go to my profile</button>
+          </div>
+        </div>
+      </section>
+    </div>
+  </main>
+</div>
+<script src="js/content/categories.js"></script>
+<script src="js/content/quiz.js"></script>
+<script src="js/api.js"></script>
 <script src="js/app.js"></script>
 </body>
 </html>
