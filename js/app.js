@@ -19,6 +19,19 @@ const app = Vue.createApp({
             error: '',
             requestId: 0,
 
+            // explore controls
+            search: '',
+            searchTimer: null,
+            sortBy: 'topic',
+            sortDir: 'asc',
+            category: 'all',
+            ageGroup: 'all',
+            teacherFilter: '',
+            categories: CATEGORIES,
+            ageGroups: AGE_GROUPS,
+            categoryStyle: CATEGORY_STYLE,
+            teacherColours: ['#FFD45C', '#FF8FA6', '#8FD6A8', '#9CCBFF', '#FFA66B', '#C9B6FF'],
+
             // notifications
             toast: null,
             toastTimer: null,
@@ -51,6 +64,54 @@ const app = Vue.createApp({
     },
 
     computed: Object.assign({}, activityComputed, {
+        // explore page 
+        sortedResults() {
+            const list = this.results.filter(lesson => {
+                const matchesCategory = this.category === 'all' || categoryOf(lesson.topic) === this.category;
+                return matchesCategory && this.matchesAge(lesson);
+            });
+
+            list.sort((a, b) => {
+                let result;
+
+                if (this.sortBy === 'price') {
+                    result = a.price - b.price;
+                } 
+                
+                else if (this.sortBy === 'space') {
+                    result = this.availableSpaces(a) - this.availableSpaces(b);
+                } 
+                
+                else {
+                    result = String(a[this.sortBy]).localeCompare(
+                        String(b[this.sortBy])
+                    );
+                }
+
+                if (result === 0) {
+                    return a.title.localeCompare(b.title);
+                }
+
+                if (this.sortDir === 'desc') {
+                    return -result;
+                }
+
+                return result;
+            });
+
+            return list;
+        },
+
+        directionLabels() {
+            if (this.sortBy === 'price') 
+                return ['Low to high', 'High to low'];
+            if (this.sortBy === 'space') 
+                return ['Fewest first', 'Most first'];
+            return ['A to Z', 'Z to A'];
+        },
+        hasFilters() {
+            return this.search !== '' || this.category !== 'all' || this.teacherFilter !== '' || this.ageGroup !== 'all';
+        },
         showGrid() {
             return this.view === 'home'
                 || (this.view === 'explore' && !this.loading && !this.error && this.sortedResults.length > 0)
@@ -69,6 +130,12 @@ const app = Vue.createApp({
             return [];
         }
     }),
+
+    watch: {
+        teacherFilter() { 
+            this.loadResults(); 
+        }
+    },
 
     created() {
         this.loadTeachers();
@@ -93,6 +160,12 @@ const app = Vue.createApp({
     },
 
     methods: Object.assign({}, activityMethods, {
+        matchesAge(lesson) {
+            if (this.ageGroup === 'all') 
+                return true;
+            const group = AGE_GROUPS.find(g => g.id === this.ageGroup);
+            return lesson.ageMin <= group.max && lesson.ageMax >= group.min;
+        },
         // loading data
         loadTeachers() {
             return WonderlyAPI.getTeachers()
@@ -133,6 +206,12 @@ const app = Vue.createApp({
                 .then(lessons => { if (id === this.requestId) this.results = lessons; })
                 .catch(err => { if (id === this.requestId) this.error = 'We could not load the lessons. ' + err.message; })
                 .finally(() => { if (id === this.requestId) this.loading = false; });
+        },
+        clearFilters() {
+            this.search = '';
+            this.category = 'all';
+            this.teacherFilter = '';
+            this.ageGroup = 'all';
         },
 
         // helpers
