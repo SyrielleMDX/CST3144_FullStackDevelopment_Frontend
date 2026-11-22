@@ -261,7 +261,7 @@
         </div>
       </div>
     </section>
-    
+
       <section class="section" v-if="!showPicks">
         <div class="container">
           <div class="promo">
@@ -297,6 +297,61 @@
         </div>
       </section>
 
+    <!-- teachers page -->
+    <section v-if="view === 'teachers'" class="page" :class="{ 'page-top': showGrid }">
+      <div class="container">
+        <div v-if="!selectedTeacher">
+          <div class="page-head">
+            <p class="eyebrow">Teachers</p>
+            <h1>Meet your guides</h1>
+            <p>Choose a teacher to see every class they run.</p>
+          </div>
+          <p class="state" v-if="!teachers.length && !error">
+            <i class="fa-solid fa-spinner fa-spin-pulse"></i> Loading teachers…
+          </p>
+          <div class="teacher-grid">
+            <article v-for="(t, i) in teachers" :key="t._id" class="teacher-card">
+              <div class="avatar-wrap">
+                <svg class="sticker" viewBox="0 0 100 100" :color="teacherColours[i % teacherColours.length]">
+                  <use href="#sticker-flower"/>
+                </svg>
+                <span class="avatar-initials">{{ t.firstName[0] }}{{ t.lastName[0] }}</span>
+                <img class="avatar-photo" v-if="t.image" :src="imageUrl(t.image)" v-on:error="$event.target.style.display='none'">
+              </div>
+              <h3>{{ t.firstName }} {{ t.lastName }}</h3>
+              <p class="speciality">{{ t.speciality }}</p>
+              <p class="bio">{{ t.bio }}</p>
+              <button class="btn btn-ghost" v-on:click="openTeacher(t._id)">
+                View {{ lessonCountFor(t._id) }} {{ lessonCountFor(t._id) === 1 ? 'lesson' : 'lessons' }} 
+                <i class="fa-solid fa-arrow-right"></i>
+              </button>
+            </article>
+          </div>
+        </div>
+        <div v-else>
+          <button class="btn btn-ghost back-btn" v-on:click="selectedTeacherId = null">
+            <i class="fa-solid fa-arrow-left"></i> All teachers
+          </button>
+          <div class="teacher-profile">
+            <div class="avatar-wrap large">
+              <svg class="sticker" viewBox="0 0 100 100" color="#FFD45C">
+                <use href="#sticker-flower"/>
+              </svg>
+              <span class="avatar-initials">{{ selectedTeacher.firstName[0] }}{{ selectedTeacher.lastName[0] }}</span>
+              <img class="avatar-photo" v-if="selectedTeacher.image" :src="imageUrl(selectedTeacher.image)" v-on:error="$event.target.style.display='none'">
+            </div>
+            <div>
+              <h1>{{ selectedTeacher.firstName }} {{ selectedTeacher.lastName }}</h1>
+              <p class="speciality">{{ selectedTeacher.speciality }}</p>
+              <p>{{ selectedTeacher.bio }}</p>
+            </div>
+          </div>
+          <h2 class="subhead">Classes taught by {{ selectedTeacher.firstName }}</h2>
+          <p class="state" v-if="!teacherLessons.length"><i class="fa-solid fa-spinner fa-spin-pulse"></i> Loading classes…</p>
+        </div>
+      </div>
+    </section>
+    
     <!-- common lesson grid -->
     <section v-if="showGrid" :class="view === 'home' ? 'section' : 'page-end'">
       <div class="container" :class="{ narrow: view === 'quiz' }">
