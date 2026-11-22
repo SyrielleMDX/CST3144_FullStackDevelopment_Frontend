@@ -190,6 +190,78 @@
         </div>
       </section>
 
+    <!-- explore page -->
+    <section v-if="view === 'explore'" class="page" :class="{ 'page-top': showGrid }">
+      <div class="container">
+        <div class="page-head">
+          <p class="eyebrow">Explore</p>
+          <h1>Find your next favourite thing</h1>
+          <p>Search, sort and filter every class for ages 6 to 18, then add places to your cart.</p>
+        </div>
+
+        <div class="toolbar">
+          <div class="search-box">
+            <i class="fa-solid fa-magnifying-glass"></i>
+            <input type="search" v-model.trim="search" placeholder="Search subject, place, price or spaces…">
+            <button v-if="search" class="icon-btn" v-on:click="search = ''">
+              <i class="fa-solid fa-xmark"></i>
+            </button>
+          </div>
+          <label class="field">
+            <span>Sort by</span>
+            <select v-model="sortBy">
+              <option value="topic">Subject</option>
+              <option value="location">Location</option>
+              <option value="price">Price</option>
+              <option value="space">Spaces left</option>
+            </select>
+          </label>
+          <div class="segmented" role="group">
+            <button :class="{ active: sortDir === 'asc' }" v-on:click="sortDir = 'asc'">
+              <i class="fa-solid fa-arrow-up-short-wide" ></i> {{ directionLabels[0] }}
+            </button>
+            <button :class="{ active: sortDir === 'desc' }" v-on:click="sortDir = 'desc'">
+              <i class="fa-solid fa-arrow-down-wide-short"></i> {{ directionLabels[1] }}
+            </button>
+          </div>
+        </div>
+
+        <div class="filters">
+          <div class="chips" role="group">
+            <button class="chip" :class="{ active: ageGroup === 'all' }" v-on:click="ageGroup = 'all'">All ages</button>
+            <button v-for="g in ageGroups" :key="g.id" class="chip" :class="{ active: ageGroup === g.id }" v-on:click="ageGroup = g.id">Ages {{ g.label }}</button>
+          </div>
+          <label class="field inline">
+            <span>Teacher</span>
+            <select v-model="teacherFilter">
+              <option value="">Everyone</option>
+              <option v-for="t in teachers" :key="t._id" :value="t._id">{{ t.firstName }} {{ t.lastName }}</option>
+            </select>
+          </label>
+        </div>
+        <div class="chips spaced" role="group">
+          <button class="chip" :class="{ active: category === 'all' }" v-on:click="category = 'all'">All interests</button>
+          <button v-for="c in categories" :key="c.id" class="chip" :class="['chip-' + c.id, { active: category === c.id }]" v-on:click="category = c.id">
+            <i :class="['fa-solid', c.icon]"></i> {{ c.label }}</button>
+        </div>
+
+        <p class="result-count" v-if="!loading && !error">
+          {{ sortedResults.length }} {{ sortedResults.length === 1 ? 'class' : 'classes' }} found
+          <button class="link" v-if="hasFilters" v-on:click="clearFilters">Clear filters</button>
+        </p>
+
+        <p class="state" v-if="loading"><i class="fa-solid fa-spinner fa-spin-pulse"></i> Loading classes…</p>
+        <div class="state error-state" v-else-if="error">
+          <p><i class="fa-solid fa-triangle-exclamation"></i> {{ error }}</p>
+          <button class="btn btn-brown" v-on:click="loadResults">Try again</button>
+        </div>
+        <div class="state" v-else-if="sortedResults.length === 0">
+          <p><i class="fa-regular fa-face-frown"></i> No classes match that search.</p>
+          <button class="btn btn-ghost" v-on:click="clearFilters">Clear filters</button>
+        </div>
+      </div>
+    </section>
+    
       <section class="section" v-if="!showPicks">
         <div class="container">
           <div class="promo">
@@ -343,7 +415,7 @@
         </div>
       </div>
     </section>
-    
+
     <div v-if="view === 'home'">
       <section class="section tint">
         <div class="container">
