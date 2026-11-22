@@ -13,7 +13,36 @@ const app = Vue.createApp({
             ratings: {},
             loading: true,
             error: '',
-            requestId: 0
+            requestId: 0,
+            
+            // notifications
+            toast: null,
+            toastTimer: null,
+
+            // newsletter
+            newsletterEmail: '',
+            newsletterError: '',
+
+            // for home page
+            heroTiles: [
+                { icon: 'fa-robot', colour: '#8FD6A8', sticker: 'flower' },
+                { icon: 'fa-palette', colour: '#FF8FA6', sticker: 'burst' },
+                { icon: 'fa-drum', colour: '#FFA66B', sticker: 'flower' },
+                { icon: 'fa-flask', colour: '#FFD45C', sticker: 'burst' },
+                { icon: 'fa-chess-knight', colour: '#9CCBFF', sticker: 'flower' }
+            ],
+
+            // home page content
+            features: [
+                { cls: 'green', icon: 'fa-wand-magic-sparkles', title: 'Try before you book', text: 'Every class has its own mini activity, from coding puzzles to chess mates, so you know what you are signing up for.' },
+                { cls: 'pink', icon: 'fa-children', title: 'Made for ages 6 to 18', text: 'Playful classes for little ones and serious skills for teens, all filtered by age so you only see what fits.' },
+                { cls: 'orange', icon: 'fa-star', title: 'Real reviews', text: 'Only people who booked a class can rate it, so the stars and comments you read are honest.' }
+            ],
+            parentPoints: [
+                { icon: 'fa-calendar-check', title: 'Simple booking', text: 'Compare spaces, prices and places, then check out in one go.' },
+                { icon: 'fa-shield-heart', title: 'Trusted teachers', text: 'Meet every teacher and read what other families say.' },
+                { icon: 'fa-clock-rotate-left', title: 'Everything in one place', text: 'Your booking history and reviews live in your profile.' }
+            ]
         }
     },
 
