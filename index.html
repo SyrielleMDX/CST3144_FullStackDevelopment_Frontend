@@ -224,6 +224,126 @@
           </div>
         </div>
       </section>
+
+    <!-- common lesson grid -->
+    <section v-if="showGrid" :class="view === 'home' ? 'section' : 'page-end'">
+      <div class="container" :class="{ narrow: view === 'quiz' }">
+        <div class="section-head row" v-if="view === 'home'">
+          <div v-if="showPicks">
+            <p class="eyebrow">Picked for you</p>
+            <h2>Classes that fit {{ quizSummary ? '' : 'you' }}
+              <span v-if="quizSummary" class="muted-title">{{ quizSummary }}</span>
+            </h2>
+          </div>
+          <div v-else>
+            <p class="eyebrow">Popular right now</p>
+            <h2>Classes people are joining</h2>
+          </div>
+          <button class="btn btn-ghost" v-if="showPicks" v-on:click="go('quiz')">Retake the quiz</button>
+          <button class="btn btn-ghost" v-else v-on:click="go('explore')">See all</button>
+        </div>
+        <p class="state" v-if="view === 'home' && !catalogue.length && !error"><i class="fa-solid fa-spinner fa-spin-pulse"></i> Loading classes…</p>
+        
+        <div class="lesson-grid" v-if="gridLessons.length">
+          <article v-for="lesson in gridLessons" 
+                  :key="lesson._id" 
+                  class="lesson-card"
+                  :class="[catClass(lesson.topic), { full: availableSpaces(lesson) <= 0 }]">
+            <svg class="sticker card-sticker" viewBox="0 0 100 100" :color="categoryStyle[catId(lesson.topic)].color">
+              <use :href="'#sticker-' + categoryStyle[catId(lesson.topic)].sticker"/>
+            </svg>
+
+            <div class="pick-head" v-if="pickInfo[lesson._id] && (view === 'quiz' || (view === 'home' && showPicks))">
+              <span class="pick-rank">{{ pickInfo[lesson._id].rank }}</span>
+              <span class="pick-level" :class="{ best: pickInfo[lesson._id].rank === 1 }">{{ pickInfo[lesson._id].level }}</span>
+              <span class="reason" v-for="r in pickInfo[lesson._id].reasons" :key="r">{{ r }}</span>
+            </div>
+
+            <div class="card-top">
+              <span class="icon-bubble">
+                <i :class="['fa-solid', lesson.icon]"></i>
+              </span>
+              <span class="age-pill">Ages {{ lesson.ageMin }}–{{ lesson.ageMax }}</span>
+            </div>
+
+            <!-- display images for each lesson -->
+            <img class="lesson-photo" v-if="lesson.image" :src="imageUrl(lesson.image)" :alt="lesson.title" v-on:error="$event.target.style.display = 'none'">
+            <p class="lesson-topic">{{ lesson.topic }}</p>
+            <h3 class="lesson-title">
+              <button class="title-btn" v-on:click="openPreview(lesson)">
+                {{ lesson.title }}
+              </button>
+            </h3>
+
+            <div class="rating-row">
+              <span v-if="ratings[lesson._id] && ratings[lesson._id].count" class="rating-info">
+                <span class="stars small" role="img">
+                  <i v-for="n in 5" :key="n" :class="starClass(ratings[lesson._id].average, n)"></i>
+                </span>
+                <button class="link" v-on:click="openPreview(lesson, 'reviews')">
+                  {{ ratings[lesson._id].average.toFixed(1) }} ({{ ratings[lesson._id].count }})
+                </button>
+              </span>
+              <span v-else class="muted">New, no reviews yet</span>
+            </div>
+
+            <ul class="lesson-meta">
+              <li>
+                <i class="fa-solid fa-location-dot"></i> 
+                {{ lesson.location }}
+              </li>
+              <li v-if="teacherName(lesson.teacherId)">
+                <i class="fa-solid fa-chalkboard-user"></i>
+                <button class="link" v-on:click="openTeacher(lesson.teacherId)">
+                  {{ teacherName(lesson.teacherId) }}
+                </button>
+              </li>
+            </ul>
+
+            <div class="card-tags">
+              <span class="tag tag-hot" v-if="enrolment[lesson._id] > 0">
+                <i class="fa-solid fa-users"></i> {{ enrolment[lesson._id] }} joined
+              </span>
+              <span class="tag tag-tried" v-if="discovery.tried[lesson.previewType]">
+                <i class="fa-solid fa-circle-check"></i> Tried it
+              </span>
+              <span class="tag tag-last" v-if="availableSpaces(lesson) === 1">Last seat!</span>
+              <span class="tag tag-full" v-else-if="availableSpaces(lesson) <= 0">Fully booked</span>
+            </div>
+
+            <div class="card-foot">
+              <div class="price-block">
+                <span class="price">{{ $money(lesson.price) }}</span>
+                <span class="spaces">
+                  <span class="pips">
+                    <i v-for="n in Math.max(5, lesson.space)" :key="n" class="pip" :class="{ on: n <= availableSpaces(lesson) }"></i>
+                  </span>
+                  {{ availableSpaces(lesson) }} {{ availableSpaces(lesson) === 1 ? 'space' : 'spaces' }} left
+                </span>
+              </div>
+              <div class="card-actions">
+                <button class="btn btn-brown" v-on:click="addToCart(lesson)" :disabled="availableSpaces(lesson) <= 0">
+                  <i class="fa-solid fa-basket-shopping"></i> Add to Cart
+                </button>
+                <button class="arrow-btn" v-on:click="openPreview(lesson)">
+                  <i class="fa-solid fa-arrow-up-right-from-square"></i>
+                </button>
+              </div>
+            </div>
+          </article>
+        </div>
+
+        <div class="hero-actions" v-if="view === 'quiz'">
+          <button class="btn btn-ghost" v-on:click="startQuiz">
+            <i class="fa-solid fa-rotate-left"></i> Retake the quiz
+          </button>
+          <button class="btn btn-brown" v-on:click="go('explore')">
+            Browse every class
+          </button>
+        </div>
+      </div>
+    </section>
+    
     <div v-if="view === 'home'">
       <section class="section tint">
         <div class="container">
