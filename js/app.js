@@ -1,3 +1,7 @@
+function formatPrice(amount) {
+    return 'Rs ' + Number(amount).toLocaleString('en-US');
+}
+
 const app = Vue.createApp({
     data() {
         return {
@@ -14,7 +18,7 @@ const app = Vue.createApp({
             loading: true,
             error: '',
             requestId: 0,
-            
+
             // notifications
             toast: null,
             toastTimer: null,
@@ -45,6 +49,26 @@ const app = Vue.createApp({
             ]
         }
     },
+
+    computed: Object.assign({}, activityComputed, {
+        showGrid() {
+            return this.view === 'home'
+                || (this.view === 'explore' && !this.loading && !this.error && this.sortedResults.length > 0)
+                || (this.view === 'teachers' && !!this.selectedTeacher)
+                || (this.view === 'quiz' && this.quizMode === 'results');
+        },
+        gridLessons() {
+            if (this.view === 'explore') 
+                return this.sortedResults;
+            if (this.view === 'teachers') 
+                return this.teacherLessons;
+            if (this.view === 'quiz') 
+                return this.picks.map(p => p.lesson);
+            if (this.view === 'home') 
+                return this.showPicks ? this.picks.map(p => p.lesson) : this.popularLessons;
+            return [];
+        }
+    }),
 
     created() {
         this.loadTeachers();
@@ -109,7 +133,30 @@ const app = Vue.createApp({
                 .then(lessons => { if (id === this.requestId) this.results = lessons; })
                 .catch(err => { if (id === this.requestId) this.error = 'We could not load the lessons. ' + err.message; })
                 .finally(() => { if (id === this.requestId) this.loading = false; });
-        }
+        },
+
+        // helpers
+        teacherName(id) {
+            const teacher = this.teachers.find(t => t._id === id);
+            return teacher ? teacher.firstName + ' ' + teacher.lastName : '';
+        },       
+        catId(topic) { 
+          return categoryOf(topic); 
+        },
+        catClass(topic) { 
+          return 'cat-' + categoryOf(topic); 
+        },
+        imageUrl(file) {
+            return API_BASE_URL + '/images/' + file;
+        },
+
+        // spaces displayed to users
+        availableSpaces(lesson) { 
+            return Math.max(0, lesson.space - this.cartQty(lesson._id)); 
+        },
+        hasBought(lessonId) { 
+            return this.myOrders.some(o => o.items.some(i => i.lessonId === lessonId)); 
+        },
     })
 });
 
