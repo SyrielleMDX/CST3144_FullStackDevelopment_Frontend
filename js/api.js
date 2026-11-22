@@ -41,3 +41,23 @@ function sendJson(method, path, data) {
         body: JSON.stringify(data) 
     });
 }
+
+const WonderlyAPI = {
+    getLessons: function (params) {
+        const query = new URLSearchParams();
+
+        if (params && params.search) 
+            query.set('search', params.search);
+        if (params && params.teacherId) 
+            query.set('teacherId', params.teacherId);
+        
+        const text = query.toString();
+        return request('/lessons' + (text ? '?' + text : ''));
+    },
+    getTeachers: function () {
+        return request('/teachers');
+    },
+    getEnrolment: function (lessonId) {
+        return request('/enrolment/' + lessonId).then(function (body) { return body.enrolled; });
+    }
+}
