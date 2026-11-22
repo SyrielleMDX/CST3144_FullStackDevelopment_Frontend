@@ -32,6 +32,10 @@ const app = Vue.createApp({
             categoryStyle: CATEGORY_STYLE,
             teacherColours: ['#FFD45C', '#FF8FA6', '#8FD6A8', '#9CCBFF', '#FFA66B', '#C9B6FF'],
 
+            // teachers page
+            selectedTeacherId: null,
+            teacherLessons: [],
+
             // notifications
             toast: null,
             toastTimer: null,
@@ -128,6 +132,14 @@ const app = Vue.createApp({
             if (this.view === 'home') 
                 return this.showPicks ? this.picks.map(p => p.lesson) : this.popularLessons;
             return [];
+        },
+
+        // teachers
+        featuredTeachers() { 
+            return this.teachers.slice(0, 3); 
+        },
+        selectedTeacher() { 
+            return this.teachers.find(t => t._id === this.selectedTeacherId) || null; 
         }
     }),
 
@@ -160,6 +172,30 @@ const app = Vue.createApp({
     },
 
     methods: Object.assign({}, activityMethods, {
+        // navigation
+        go(id) {
+            if (this.view === 'tryit' && id !== 'tryit') 
+                this.startActivity();   // stops timers and resets the game
+            this.view = id;
+            this.menuOpen = false;
+            this.previewLesson = null;
+            if (id !== 'cart') 
+                this.confirmation = null;
+            if (id !== 'teachers') 
+                this.selectedTeacherId = null;
+            if (id === 'quiz') 
+                this.quizMode = this.quizResult ? 'results' : 'intro';
+            if (id === 'history' || id === 'profile') {
+                if (!this.user) {
+                    this.authMode = 'login';
+                    this.authReturn = id;
+                    this.view = 'auth';
+                } else {
+                    this.loadMyOrders();
+                }
+            }
+            window.scrollTo({ top: 0 });
+        },
         matchesAge(lesson) {
             if (this.ageGroup === 'all') 
                 return true;
@@ -218,7 +254,10 @@ const app = Vue.createApp({
         teacherName(id) {
             const teacher = this.teachers.find(t => t._id === id);
             return teacher ? teacher.firstName + ' ' + teacher.lastName : '';
-        },       
+        },     
+        lessonCountFor(teacherId) { 
+          return this.catalogue.filter(l => l.teacherId === teacherId).length; 
+        },  
         catId(topic) { 
           return categoryOf(topic); 
         },
@@ -236,6 +275,18 @@ const app = Vue.createApp({
         hasBought(lessonId) { 
             return this.myOrders.some(o => o.items.some(i => i.lessonId === lessonId)); 
         },
+        openTeacher(teacherId) {
+            this.view = 'teachers';
+            this.menuOpen = false;
+            this.confirmation = null;
+            this.previewLesson = null;
+            this.selectedTeacherId = teacherId;
+            this.teacherLessons = [];
+            window.scrollTo({ top: 0 });
+            WonderlyAPI.getLessons({ teacherId: teacherId })
+                .then(lessons => { if (this.selectedTeacherId === teacherId) this.teacherLessons = lessons; })
+                .catch(err => { this.error = err.message; });
+        }
     })
 });
 
