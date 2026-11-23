@@ -435,3 +435,109 @@ ul, ol {
 .back-btn { 
   margin-bottom: .5rem; 
 }
+
+/* styling for cart */
+.cart-layout { 
+  display: grid; 
+  grid-template-columns: 1.5fr 1fr; 
+  gap: 1.75rem; 
+  align-items: start; 
+}
+.cart-list { 
+  display: grid; 
+  gap: .9rem; 
+}
+.cart-line { 
+  display: grid; 
+  grid-template-columns: auto 1fr auto auto; 
+  gap: .5rem 1rem; align-items: center; background: #FFFBF3; border: 2px solid #3F2620; border-radius: 22px; padding: 1rem 1.15rem; }
+.cart-line .icon-bubble { 
+  width: 3.4rem; 
+  height: 3.4rem; 
+}
+.cart-line .icon-bubble.cat-build { 
+  background: #B7E6C6; 
+} 
+.cart-line .icon-bubble.cat-make { 
+  background: #FFC0CC; 
+} 
+.cart-line .icon-bubble.cat-move { 
+  background: #FFC49A; 
+}
+.cart-line .icon-bubble.cat-explore { 
+  background: #FFE08A; 
+} 
+.cart-line .icon-bubble.cat-think { 
+  background: #BBDBFF; 
+}
+.cart-info h3 { 
+  margin: 0; font-size: 1.2rem; 
+} 
+.cart-info p { 
+  margin: 0; 
+  font-size: .92rem; 
+  color: #7A6258; 
+}
+.qty { 
+  display: inline-flex; 
+  align-items: center; 
+  gap: .6rem; 
+  border: 2px solid #3F2620; 
+  border-radius: 999px; 
+  padding: .15rem; 
+}
+.qty button { 
+  width: 2rem; 
+  height: 2rem; 
+  border-radius: 50%; 
+  border: 0; 
+  background: #FFE9A8; 
+}
+.qty button:disabled { 
+  opacity: .35; 
+  cursor: not-allowed; 
+} 
+.qty span { 
+  min-width: 1.2rem; 
+  text-align: center; 
+  font-weight: 700; 
+}
+.line-total { 
+  font-family: var(--font-display); 
+  font-weight: 800; 
+  font-size: 1.15rem; 
+  margin: 0; 
+  min-width: 5.5rem; 
+  text-align: right; 
+}
+.remove { 
+  grid-column: 2 / -1; 
+  justify-self: end; 
+  padding: .3rem .8rem; 
+  font-size: .88rem; 
+  border-width: 1px; 
+}
+.cart-total, .checkout-total, .ticket-total { 
+  display: flex; 
+  justify-content: space-between; 
+  align-items: center; 
+  font-size: 1.15rem; 
+  padding: .5rem .25rem; 
+}
+.cart-total strong, .checkout-total strong, .ticket-total strong { 
+  font-family: var(--font-display); 
+  font-size: 1.7rem; 
+}
+.checkout { 
+  position: sticky; 
+  top: 5.5rem; 
+  background: #FFFBF3; 
+  border: 2px solid #3F2620; 
+  border-radius: 26px; 
+  padding: 1.5rem; 
+  box-shadow: 8px 8px 0 #FFD45C; 
+}
+.checkout-total { 
+  border-top: 2px dashed #EBD9C2; 
+  margin-bottom: .75rem; 
+}
