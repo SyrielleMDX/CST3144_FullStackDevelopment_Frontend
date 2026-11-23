@@ -68,6 +68,14 @@ const app = Vue.createApp({
     },
 
     computed: Object.assign({}, activityComputed, {
+        // cart
+        cartCount() { 
+          return this.cart.reduce((sum, item) => sum + item.quantity, 0); 
+        },
+        cartTotal() { 
+          return this.cart.reduce((sum, item) => sum + item.quantity * item.lesson.price, 0); 
+        },
+
         // explore page 
         sortedResults() {
             const list = this.results.filter(lesson => {
@@ -146,6 +154,10 @@ const app = Vue.createApp({
     watch: {
         teacherFilter() { 
             this.loadResults(); 
+        },
+        cartCount(count) {
+            if (count === 0 && this.view === 'cart' && !this.confirmation) 
+                this.go('explore');
         }
     },
 
@@ -196,12 +208,19 @@ const app = Vue.createApp({
             }
             window.scrollTo({ top: 0 });
         },
+        toggleCart() {
+            if (this.view === 'cart') 
+                this.go('explore');
+            else if (this.cartCount > 0) 
+                this.go('cart');
+        },
         matchesAge(lesson) {
             if (this.ageGroup === 'all') 
                 return true;
             const group = AGE_GROUPS.find(g => g.id === this.ageGroup);
             return lesson.ageMin <= group.max && lesson.ageMax >= group.min;
         },
+
         // loading data
         loadTeachers() {
             return WonderlyAPI.getTeachers()
@@ -268,6 +287,11 @@ const app = Vue.createApp({
             return API_BASE_URL + '/images/' + file;
         },
 
+        cartQty(lessonId) {
+            const item = this.cart.find(i => i.lesson._id === lessonId);
+            return item ? item.quantity : 0;
+        },
+
         // spaces displayed to users
         availableSpaces(lesson) { 
             return Math.max(0, lesson.space - this.cartQty(lesson._id)); 
@@ -275,6 +299,29 @@ const app = Vue.createApp({
         hasBought(lessonId) { 
             return this.myOrders.some(o => o.items.some(i => i.lessonId === lessonId)); 
         },
+
+        // cart
+        addToCart(lesson) {
+            if (this.availableSpaces(lesson) <= 0) 
+                return;
+            const item = this.cart.find(i => i.lesson._id === lesson._id);
+            if (item) 
+                item.quantity++;
+            else 
+                this.cart.push({ lesson: Object.assign({}, lesson), quantity: 1 });
+        },
+        removeOne(lessonId) {
+            const index = this.cart.findIndex(i => i.lesson._id === lessonId);
+            if (index === -1) 
+                return;
+            if (this.cart[index].quantity > 1) 
+                this.cart[index].quantity--;
+            else this.cart.splice(index, 1);
+        },
+        removeLine(lessonId) {
+            this.cart = this.cart.filter(i => i.lesson._id !== lessonId);
+        },
+
         openTeacher(teacherId) {
             this.view = 'teachers';
             this.menuOpen = false;
