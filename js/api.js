@@ -59,5 +59,13 @@ const WonderlyAPI = {
     },
     getEnrolment: function (lessonId) {
         return request('/enrolment/' + lessonId).then(function (body) { return body.enrolled; });
+    },
+    updateLessonSpace: function (lessonId, space) {
+        return sendJson('PUT', '/lessons/' + lessonId, { space: space });
+    },
+
+    // orders
+    postOrder: function (order) {
+        return sendJson('POST', '/orders', order);
     }
 }
