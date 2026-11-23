@@ -570,7 +570,36 @@
             </article>
             <p class="cart-total"><span>Total</span><strong>{{ $money(cartTotal) }}</strong></p>
           </div>
-          
+          <form class="checkout" v-on:submit.prevent="submitOrder" novalidate>
+            <h2>Checkout</h2>
+            <p class="muted" v-if="user">
+              Booking as <strong>{{ user.name }}</strong>. Your booking will be saved to your history.
+            </p>
+            <p class="muted" v-else>Checking out as a guest. 
+              <button type="button" class="link" v-on:click="openAuth('login')">Log in</button> to save it to your history and leave reviews.
+            </p>
+            <label class="form-field">
+              <span>Parent or guardian name</span>
+              <input type="text" v-model.trim="name" autocomplete="name" placeholder="e.g. Stephanie Soo">
+              <small id="name-help" class="field-error" v-if="name !== '' && !nameValid">Letters and spaces only, please.</small>
+            </label>
+            <label class="form-field">
+              <span>Phone number</span>
+              <input type="tel" inputmode="numeric" v-model.trim="phone" autocomplete="tel" placeholder="e.g. 5712345678">
+              <small id="phone-help" class="field-error" v-if="phone !== '' && !phoneValid">Numbers only, with no spaces or symbols.</small>
+            </label>
+            <div class="checkout-total">
+              <span>{{ cartCount }} {{ cartCount === 1 ? 'place' : 'places' }}</span><strong>{{ $money(cartTotal) }}</strong>
+            </div>
+            <button type="submit" class="btn btn-brown btn-lg btn-block" :disabled="!canCheckout || submitting">
+              <i class="fa-solid" :class="submitting ? 'fa-spinner fa-spin-pulse' : 'fa-lock'"></i>
+              {{ submitting ? 'Booking…' : 'Checkout' }}
+            </button>
+            <p class="field-error" v-if="orderError">{{ orderError }}</p>
+          </form>
+        </div>
+      </div>
+    </section>
     </div>
   </main>
 </div>
