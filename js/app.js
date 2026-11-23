@@ -295,6 +295,12 @@ const app = Vue.createApp({
         catClass(topic) { 
           return 'cat-' + categoryOf(topic); 
         },
+        formatDate(iso) { 
+          return new Date(iso).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' }); 
+        },
+        shortRef(id) { 
+          return '#' + String(id).slice(-6).toUpperCase(); 
+        },
         imageUrl(file) {
             return API_BASE_URL + '/images/' + file;
         },
@@ -332,6 +338,51 @@ const app = Vue.createApp({
         },
         removeLine(lessonId) {
             this.cart = this.cart.filter(i => i.lesson._id !== lessonId);
+        },
+
+        // checkout function 
+        submitOrder() {
+            if (!this.canCheckout || this.submitting) 
+                return;
+            this.submitting = true;
+            this.orderError = '';
+            const summary = this.cart.map(i => ({ title: i.lesson.title, quantity: i.quantity, total: i.quantity * i.lesson.price }));
+            const payload = {
+                name: this.name,
+                phone: this.phone,
+                items: this.cart.map(i => ({ lessonId: i.lesson._id, quantity: i.quantity }))
+            };
+
+            WonderlyAPI.postOrder(payload)
+                .then(order => {
+                    // when order saved, update spaces of booked lesson
+                    const updates = order.items.map(item =>
+                        WonderlyAPI.updateLessonSpace(item.lessonId, order.currentSpaces[item.lessonId] - item.quantity));
+                    return Promise.all(updates)
+                        .catch(err => console.error('Could not update the lesson spaces:', err))
+                        .then(() => order);
+                })
+                .then(order => {
+                    this.confirmation = { reference: this.shortRef(order._id), name: order.name, items: summary, total: order.total, loggedIn: !!this.user };
+                    this.confetti = this.makeConfetti();
+                    this.cart = [];
+                    this.name = this.user ? this.user.name : '';
+                    this.phone = this.user ? (this.user.phone || '') : '';
+                    this.loadCatalogue();
+                    this.loadResults();
+                    if (this.user) this.loadMyOrders();
+                })
+                .catch(err => { this.orderError = err.message; })
+                .finally(() => { this.submitting = false; });
+        },
+        makeConfetti() {
+            const colours = ['#FFD45C', '#3F2620', '#FF8FA6', '#8FD6A8', '#9CCBFF', '#FF7F3F'];
+            return Array.from({ length: 36 }, (_, i) => ({
+                left: Math.random() * 100 + '%',
+                background: colours[i % colours.length],
+                animationDelay: Math.random() * 0.8 + 's',
+                animationDuration: 2.2 + Math.random() * 1.8 + 's'
+            }));
         },
 
         openTeacher(teacherId) {
