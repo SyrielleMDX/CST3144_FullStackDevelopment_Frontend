@@ -1,3 +1,6 @@
+const NAME_PATTERN = /^[A-Za-z ]+$/; // letters only
+const PHONE_PATTERN = /^[0-9]+$/; // digits only
+
 function formatPrice(amount) {
     return 'Rs ' + Number(amount).toLocaleString('en-US');
 }
@@ -74,6 +77,15 @@ const app = Vue.createApp({
         },
         cartTotal() { 
           return this.cart.reduce((sum, item) => sum + item.quantity * item.lesson.price, 0); 
+        },
+        nameValid() { 
+          return NAME_PATTERN.test(this.name); 
+        },
+        phoneValid() { 
+          return PHONE_PATTERN.test(this.phone); 
+        },
+        canCheckout() { 
+          return this.cartCount > 0 && this.nameValid && this.phoneValid; 
         },
 
         // explore page 
