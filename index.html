@@ -351,7 +351,7 @@
         </div>
       </div>
     </section>
-    
+
     <!-- common lesson grid -->
     <section v-if="showGrid" :class="view === 'home' ? 'section' : 'page-end'">
       <div class="container" :class="{ narrow: view === 'quiz' }">
@@ -544,6 +544,33 @@
           </div>
         </div>
       </section>
+
+        <div v-else class="cart-layout">
+          <div class="cart-list">
+            <article v-for="line in cart" :key="line.lesson._id" class="cart-line">
+              <span class="icon-bubble" :class="catClass(line.lesson.topic)"><i :class="['fa-solid', line.lesson.icon]"></i></span>
+              <div class="cart-info">
+                <h3>{{ line.lesson.title }}</h3>
+                <p>{{ line.lesson.topic }} · {{ line.lesson.location }}</p>
+                <p class="muted">{{ $money(line.lesson.price) }} per place</p>
+              </div>
+              <div class="qty" role="group">
+                <button v-on:click="removeOne(line.lesson._id)">
+                  <i class="fa-solid fa-minus"></i>
+                </button>
+                <span>{{ line.quantity }}</span>
+                <button v-on:click="addToCart(line.lesson)" :disabled="availableSpaces(line.lesson) <= 0">
+                  <i class="fa-solid fa-plus"></i>
+                </button>
+              </div>
+              <p class="line-total">{{ $money(line.quantity * line.lesson.price) }}</p>
+              <button class="btn btn-ghost remove" v-on:click="removeLine(line.lesson._id)">
+                <i class="fa-regular fa-trash-can"></i> Remove
+              </button>
+            </article>
+            <p class="cart-total"><span>Total</span><strong>{{ $money(cartTotal) }}</strong></p>
+          </div>
+          
     </div>
   </main>
 </div>
