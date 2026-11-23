@@ -541,3 +541,66 @@ ul, ol {
   border-top: 2px dashed #EBD9C2; 
   margin-bottom: .75rem; 
 }
+.confirmation { 
+  position: relative; 
+  overflow: hidden; 
+  padding: 1rem 0 2rem; 
+}
+.ticket { 
+  position: relative; 
+  z-index: 1; 
+  max-width: 580px; 
+  margin-inline: auto; 
+  background: #FFFBF3; 
+  border: 2px solid #3F2620; 
+  border-radius: 26px; 
+  padding: 1.75rem; 
+  box-shadow: 8px 8px 0 #FFD45C; 
+}
+.ticket-tag { 
+  display: inline-flex; 
+  align-items: center; 
+  gap: .4rem; 
+  background: #FFD45C; 
+  border: 2px solid #3F2620; 
+  border-radius: 999px; 
+  padding: .15rem .85rem; 
+  font-weight: 700; 
+  font-size: .85rem; 
+}
+.ticket-items { 
+  margin: 1rem 0; 
+  border-block: 2px dashed #EBD9C2; 
+  padding: .5rem 0; 
+} 
+.ticket-items li { 
+  display: flex; 
+  justify-content: space-between; 
+  padding: .3rem 0; 
+}
+.ticket-actions { 
+  display: flex; 
+  flex-wrap: wrap; 
+  gap: .6rem; 
+  margin-top: .5rem; 
+}
+.confetti { 
+  position: absolute; 
+  inset: 0; 
+  pointer-events: none; 
+  z-index: 2; 
+}
+.confetti span { 
+  position: absolute; 
+  top: -20px; 
+  width: 10px; 
+  height: 16px; 
+  border-radius: 3px; 
+  animation: fall linear forwards; 
+}
+@keyframes fall { 
+  to { 
+    transform: translateY(520px) rotate(540deg); 
+    opacity: 0; 
+  } 
+}
