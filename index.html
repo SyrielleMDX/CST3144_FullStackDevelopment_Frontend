@@ -545,6 +545,124 @@
         </div>
       </section>
 
+    <!-- profile -->
+    <section v-if="view === 'profile' && user" class="page page-top">
+      <div class="container">
+        <div class="profile-head">
+          <div class="avatar-wrap large">
+            <svg class="sticker" viewBox="0 0 100 100" color="#FFD45C">
+              <use href="#sticker-flower"/>
+            </svg><span class="avatar-initials">{{ user.name[0] }}</span></div>
+          <div>
+            <p class="eyebrow">{{ user.role === 'parent' ? 'Parent account' : 'Student account' }}</p>
+            <h1>{{ user.name }}</h1>
+            <p class="muted">
+              {{ user.email }}<span v-if="user.age"> · {{ user.role === 'parent' ? 'Child aged ' : 'Age ' }}{{ user.age }}</span>
+            </p>
+          </div>
+          <button class="btn btn-ghost" v-on:click="logout">
+            <i class="fa-solid fa-arrow-right-from-bracket"></i> Log out
+          </button>
+        </div>
+
+        <div class="stat-row">
+          <button class="stat" v-on:click="go('history')">
+            <strong>{{ myOrders.length }}</strong><span>bookings</span>
+          </button>
+          <div class="stat">
+            <strong>{{ placesBooked }}</strong><span>places booked</span>
+          </div>
+          <div class="stat">
+            <strong>{{ reviewCount }}</strong><span>reviews written</span>
+          </div>
+          <button class="stat" v-on:click="go('tryit')">
+            <strong>{{ Object.keys(discovery.tried).length }}</strong><span>activities tried</span>
+          </button>
+        </div>
+
+        <div class="profile-grid">
+          <form class="panel" v-on:submit.prevent="saveProfile" novalidate>
+            <h2>My details</h2>
+            <label class="form-field">
+              <span>Full name</span><input type="text" v-model.trim="profileForm.name">
+            </label>
+            <div class="form-row">
+              <label class="form-field"><span>Phone</span><input type="tel" inputmode="numeric" v-model.trim="profileForm.phone"></label>
+              <label class="form-field"><span>{{ user.role === 'parent' ? 'Child’s age' : 'Your age' }}</span>
+                <select v-model="profileForm.age">
+                  <option value="">Not set</option>
+                  <option v-for="n in 13" :key="n" :value="n + 5">{{ n + 5 }}</option>
+                </select>
+              </label>
+            </div>
+            <p class="field-error" v-if="profileError" role="alert">{{ profileError }}</p>
+            <p class="feedback ok" v-if="profileMsg" role="status">{{ profileMsg }}</p>
+            <button type="submit" class="btn btn-brown" :disabled="profileBusy">{{ profileBusy ? 'Saving…' : 'Save changes' }}</button>
+          </form>
+          <div class="panel">
+            <h2>Picked for you</h2>
+            <div v-if="quizResult && picks.length">
+              <p class="muted">{{ quizSummary }}</p>
+              <ul class="mini-list">
+                <li v-for="p in picks.slice(0, 3)" :key="p.lesson._id">
+                  <button class="mini-pick" v-on:click="openPreview(p.lesson)">
+                    <span class="icon-bubble small"><i :class="['fa-solid', p.lesson.icon]"></i></span>
+                    <span><strong>{{ p.lesson.title }}</strong><small>{{ p.level }}</small></span>
+                  </button>
+                </li>
+              </ul>
+              <button class="btn btn-ghost" v-on:click="go('quiz')">See all picks</button>
+            </div>
+            <div v-else>
+              <p class="muted">Take the one-minute quiz to get suggestions that fit.</p>
+              <button class="btn btn-brown" v-on:click="go('quiz')">Find your fit</button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- booking history -->
+    <section v-if="view === 'history' && user" class="page">
+      <div class="container narrow">
+        <div class="page-head">
+          <p class="eyebrow">My bookings</p>
+          <h1>Your booking history</h1>
+          <p>Rate any class you have booked. Your review appears for everyone on that class.</p>
+        </div>
+        <p class="state" v-if="historyLoading && !myOrders.length"><i class="fa-solid fa-spinner fa-spin-pulse"></i> Loading your bookings…</p>
+        <div class="state" v-else-if="!myOrders.length">
+          <p><i class="fa-regular fa-calendar"></i> No bookings yet. Your first class will show up here.</p>
+          <button class="btn btn-brown" v-on:click="go('explore')">Explore classes</button>
+        </div>
+        <ul class="order-history" v-else>
+          <li v-for="o in myOrders" :key="o._id" class="history-card">
+            <div class="history-head">
+              <div><strong>{{ o._id }}</strong><span class="muted"> · {{ formatDate(o.createdAt) }}</span></div>
+              <span class="history-total">{{ $money(o.total) }}</span>
+            </div>
+            <ul class="history-items">
+              <li v-for="item in o.items" :key="item.lessonId">
+                <div>
+                  <strong>{{ lessonById(item.lessonId) ? lessonById(item.lessonId).title : 'Class' }}</strong>
+                  <span class="muted"> × {{ item.quantity }} · {{ $money(item.priceAtPurchase) }} each</span>
+                  <div v-if="myReviews[item.lessonId]" class="your-rating">
+                    <span class="stars small"><i v-for="n in 5" :key="n" :class="starClass(myReviews[item.lessonId].rating, n)"></i></span>
+                    <span class="muted">your rating</span>
+                  </div>
+                </div>
+                <div class="history-actions" v-if="lessonById(item.lessonId)">
+                  <button class="btn btn-yellow small" v-on:click="openPreview(lessonById(item.lessonId), 'reviews')">
+                    <i class="fa-solid fa-star"></i> {{ myReviews[item.lessonId] ? 'Edit review' : 'Rate class' }}</button>
+                  <button class="btn btn-ghost small" v-on:click="rebook(item.lessonId)"><i class="fa-solid fa-rotate-right"></i> Book again</button>
+                </div>
+              </li>
+            </ul>
+          </li>
+        </ul>
+      </div>
+    </section>
+
     <!-- cart and checkout -->
     <section v-if="view === 'cart'" class="page">
       <div class="container">
@@ -572,7 +690,7 @@
             </div>
           </div>
         </div>
-        
+
         <div v-else class="cart-layout">
           <div class="cart-list">
             <article v-for="line in cart" :key="line.lesson._id" class="cart-line">
