@@ -1,4 +1,4 @@
-const API_BASE_URL = 'http://localhost:3000';
+const API_BASE_URL = 'https://m01026956-backend.onrender.com';
 const TOKEN_KEY = 'authToken';
 
 function getToken() {
