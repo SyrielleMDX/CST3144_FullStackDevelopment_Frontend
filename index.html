@@ -748,9 +748,330 @@
       </div>
     </section>
 
+  <!-- class window: details and reviews -->
+  <div class="modal-backdrop" v-if="previewLesson" v-on:click.self="closePreview">
+    <div class="modal" role="dialog">
+      <header class="modal-head" :class="'cat-' + previewCategory">
+        <span class="icon-bubble large"><i :class="['fa-solid', previewLesson.icon]"></i></span>
+        <div>
+          <p class="lesson-topic">{{ previewLesson.topic }} · Ages {{ previewLesson.ageMin }}–{{ previewLesson.ageMax }}</p>
+          <h2 id="modal-title">{{ previewLesson.title }}</h2>
+          <p class="modal-meta">
+            <span><i class="fa-solid fa-location-dot"></i> {{ previewLesson.location }}</span>
+            <span v-if="teacherName(previewLesson.teacherId)"><i class="fa-solid fa-chalkboard-user"></i> {{ teacherName(previewLesson.teacherId) }}</span>
+            <span v-if="reviews.length"><i class="fa-solid fa-star"></i> {{ reviewAverage.toFixed(1) }} ({{ reviews.length }})</span>
+          </p>
+        </div>
+        <button class="modal-close" ref="modalClose" v-on:click="closePreview"><i class="fa-solid fa-xmark"></i></button>
+      </header>
+
+      <div class="modal-tabs" role="tablist">
+        <button role="tab" class="modal-tab" :class="{ active: modalTab === 'about' }" v-on:click="modalTab = 'about'">About</button>
+        <button role="tab" class="modal-tab" v-if="previewLesson.previewType" :class="{ active: modalTab === 'try' }" v-on:click="openTryTab">Try it</button>
+        <button role="tab" class="modal-tab" :class="{ active: modalTab === 'reviews' }" v-on:click="modalTab = 'reviews'">Reviews ({{ reviews.length }})</button>
+      </div>
+
+      <div class="modal-body">
+        <div v-if="modalTab === 'about'">
+          <p>{{ previewLesson.description }}</p>
+          <h3 class="modal-sub">What you will do</h3>
+          <ul class="highlights">
+            <li v-for="h in previewLesson.highlights" :key="h">
+              <i class="fa-solid fa-check"></i> 
+              {{ h }}
+            </li>
+          </ul>
+          <button class="btn btn-yellow" v-if="previewLesson.previewType" v-on:click="tryLesson(previewLesson)"><i class="fa-solid fa-play"></i> Try a taste of this class</button>
+        </div>
+
+        <div v-else-if="modalTab === 'try'">
+          <div class="activity-card" v-if="activity && a.engine === activity.engine">
+            <div class="activity-head">
+              <span class="activity-label">{{ activity.label }}</span>
+              <h3>{{ activity.title }}</h3>
+              <p>{{ activity.intro }}</p>
+            </div>
+
+            <!-- robot puzzle -->
+            <div class="engine robot" v-if="activity.engine === 'robot'">
+              <div class="robot-layout">
+                <div class="robot-grid" :style="robotGridStyle">
+                  <div v-for="cell in robotCells" :key="cell.key" class="rcell"
+                       :class="{ wall: cell.wall, goal: cell.goal, here: cell.robot, crash: cell.robot && a.status === 'crash' }">
+                    <i v-if="cell.robot" class="fa-solid fa-robot"></i>
+                    <i v-else-if="cell.wall" class="fa-solid fa-box"></i>
+                    <i v-else-if="cell.item" :class="['fa-solid', activity.itemIcon, 'item']"></i>
+                    <i v-else-if="cell.goal" :class="['fa-solid', activity.goalIcon]"></i>
+                  </div>
+                </div>
+                <div class="robot-controls">
+                  <p class="queue-label"><i :class="['fa-solid', activity.itemIcon]"></i> {{ a.collected.length }} / {{ activity.items.length }} collected</p>
+                  <div class="dpad" role="group">
+                    <button class="dpad-up" v-on:click="robotAdd('up')" :disabled="a.running"><i class="fa-solid fa-arrow-up"></i></button>
+                    <button class="dpad-left" v-on:click="robotAdd('left')" :disabled="a.running"><i class="fa-solid fa-arrow-left"></i></button>
+                    <button class="dpad-right" v-on:click="robotAdd('right')" :disabled="a.running"><i class="fa-solid fa-arrow-right"></i></button>
+                    <button class="dpad-down" v-on:click="robotAdd('down')" :disabled="a.running"><i class="fa-solid fa-arrow-down"></i></button>
+                  </div>
+                  <p class="queue-label">Your program ({{ a.commands.length }}/{{ activity.maxCommands }})</p>
+                  <ol class="queue">
+                    <li v-for="(cmd, i) in a.commands" :key="i" :class="{ active: i === a.activeIndex }">
+                      <i :class="['fa-solid', robotArrows[cmd]]"></i><span class="sr-only">{{ cmd }}</span>
+                    </li>
+                    <li v-if="!a.commands.length" class="queue-empty">No commands yet</li>
+                  </ol>
+                  <div class="engine-actions">
+                    <button class="btn btn-yellow" v-on:click="robotRun" :disabled="a.running || !a.commands.length"><i class="fa-solid fa-play"></i> Run</button>
+                    <button class="btn btn-ghost" v-on:click="robotUndo" :disabled="a.running || !a.commands.length">Undo</button>
+                    <button class="btn btn-ghost" v-on:click="robotClear" :disabled="a.running || !a.commands.length">Clear</button>
+                  </div>
+                </div>
+              </div>
+              <p class="feedback" :class="a.status" role="status">{{ a.message }}</p>
+            </div>
+
+            <!-- colour mixing -->
+            <div class="engine" v-else-if="activity.engine === 'colour'">
+              <div class="round-dots">
+                <span v-for="(r, i) in activity.rounds" :key="r" :class="{ done: i < a.round || a.done, current: i === a.round && !a.done }"></span>
+              </div>
+              <p class="colour-target" v-if="!a.done">Make <strong>{{ activity.rounds[a.round] }}</strong> <span class="swatch small" :style="{ background: colourTarget.hex }"></span></p>
+              <div class="palette" role="group">
+                <button v-for="c in activity.colours" 
+                        :key="c.id" 
+                        class="swatch big" 
+                        :style="{ background: c.hex }"
+                        :disabled="a.locked || a.done" 
+                        v-on:click="colourPick(c.id)">
+                  <span>{{ c.name }}</span>
+                </button>
+              </div>
+              <div class="bowl">
+                <span class="swatch" :style="colourSlotStyle(0)"></span><i class="fa-solid fa-plus"></i>
+                <span class="swatch" :style="colourSlotStyle(1)"></span><i class="fa-solid fa-equals"></i>
+                <span class="swatch result" :style="{ background: a.result ? a.result.hex : 'transparent' }">{{ a.result ? '' : '?' }}</span>
+              </div>
+              <p class="feedback" :class="a.state" role="status">{{ a.feedback }}</p>
+              <div class="engine-actions">
+                <button class="btn btn-yellow" v-if="a.locked && !a.done" v-on:click="colourNext">Next colour <i class="fa-solid fa-arrow-right"></i></button>
+                <button class="btn btn-ghost" v-if="a.done" v-on:click="startActivity">Play again</button>
+              </div>
+            </div>
+
+            <!-- rhythm / dance memory game -->
+            <div class="engine" v-else-if="activity.engine === 'rhythm'">
+              <div class="round-dots">
+                <span v-for="(p, i) in activity.patterns" :key="i" :class="{ done: i < a.round || a.phase === 'won', current: i === a.round && a.phase !== 'won' }"></span>
+              </div>
+              <div class="pads" role="group">
+                <button v-for="p in activity.pads" :key="p.id" class="pad" :class="{ lit: a.lit === p.id }" v-on:click="rhythmTap(p.id)" :disabled="a.phase === 'playing'">
+                  <i :class="['fa-solid', p.icon]"></i><span>{{ p.name }}</span>
+                </button>
+              </div>
+              <div class="beat-progress">
+                <span v-for="(n, i) in rhythmPattern" :key="i" :class="{ filled: i < a.input.length }"></span>
+              </div>
+              <p class="feedback" :class="a.state">{{ a.message }}</p>
+              <div class="engine-actions">
+                <button class="btn btn-yellow" v-if="a.phase !== 'won'" v-on:click="rhythmListen" :disabled="a.phase === 'playing'">
+                  <i class="fa-solid fa-play"></i> {{ a.state === 'bad' || a.phase === 'input' || a.round > 0 ? 'Replay' : 'Start' }}
+                </button>
+                <button class="btn btn-ghost" v-if="a.phase === 'won'" v-on:click="startActivity">Play again</button>
+                <button class="btn btn-ghost" v-if="activity.sound" v-on:click="a.muted = !a.muted">
+                  <i class="fa-solid" :class="a.muted ? 'fa-volume-xmark' : 'fa-volume-low'"></i> {{ a.muted ? 'Sound off' : 'Sound on' }}
+                </button>
+              </div>
+            </div>
+
+            <!-- multiple choice quiz -->
+            <div class="engine quiz" v-else-if="activity.engine === 'quiz'">
+              <div v-if="!a.finished">
+                <p class="quiz-count">Question {{ a.index + 1 }} of {{ activity.questions.length }}</p>
+                <h4 class="quiz-q">{{ triviaQuestion.prompt }}</h4>
+                <pre class="code" v-if="triviaQuestion.code"><code>{{ triviaQuestion.code }}</code></pre>
+                <div class="quiz-options">
+                  <button v-for="(opt, i) in triviaQuestion.options" :key="i" class="quiz-opt"
+                          :class="{ ok: a.picked !== null && i === triviaQuestion.answer, bad: a.picked === i && i !== triviaQuestion.answer }"
+                          :disabled="a.picked !== null" v-on:click="triviaChoose(i)">
+                    <span class="opt-letter">{{ 'ABCD'[i] }}</span> {{ opt }}
+                  </button>
+                </div>
+                <p class="feedback" :class="a.picked === triviaQuestion.answer ? 'ok' : 'bad'" v-if="a.picked !== null" role="status">
+                  <strong>{{ a.picked === triviaQuestion.answer ? 'Correct!' : 'Not quite.' }}</strong> {{ triviaQuestion.explain }}
+                </p>
+                <div class="engine-actions">
+                  <button class="btn btn-yellow" v-if="a.picked !== null" v-on:click="triviaNext">{{ a.index === activity.questions.length - 1 ? 'See my score' : 'Next question' }} <i class="fa-solid fa-arrow-right"></i></button>
+                </div>
+              </div>
+              <div v-else class="quiz-end">
+                <p class="score-big">{{ a.score }}<small>/{{ activity.questions.length }}</small></p>
+                <p class="feedback" :class="a.score === activity.questions.length ? 'ok' : ''" role="status">{{ a.score === activity.questions.length ? 'Perfect score! You would fit right in.' : (a.score >= activity.questions.length / 2 ? 'Nice work! A class would sharpen those skills even more.' : 'A good start. This is exactly what the class teaches!') }}</p>
+                <button class="btn btn-ghost" v-on:click="startActivity">Play again</button>
+              </div>
+            </div>
+
+            <!-- ordering puzzle -->
+            <div class="engine order" v-else-if="activity.engine === 'order'">
+              <p class="queue-label">Your sequence</p>
+              <ol class="order-list placed">
+                <li v-for="(s, i) in a.placed" :key="s.id" :class="{ code: activity.code }"><span class="step-no">{{ i + 1 }}</span> {{ s.text }}</li>
+                <li v-if="!a.placed.length" class="order-empty">Tap the first step below…</li>
+              </ol>
+              <p class="queue-label" v-if="a.pool.length">Steps to place</p>
+              <div class="order-pool">
+                <button v-for="s in a.pool" :key="s.id" class="order-chip" :class="{ wrong: a.wrong === s.id, code: activity.code }" v-on:click="orderTap(s)">{{ s.text }}</button>
+              </div>
+              <p class="feedback" :class="a.done ? 'ok' : (a.wrong >= 0 ? 'bad' : '')" role="status">
+                <span v-if="a.done">Perfect order! {{ a.mistakes === 0 ? 'No mistakes at all.' : a.mistakes + ' wrong tap' + (a.mistakes === 1 ? '' : 's') + ' on the way.' }}</span>
+                <span v-else-if="a.wrong >= 0">That step does not come next. Think about what has to happen first.</span>
+                <span v-else>Place all {{ activity.steps.length }} steps in order.</span>
+              </p>
+              <div class="engine-actions"><button class="btn btn-ghost" v-on:click="startActivity">{{ a.done ? 'Play again' : 'Shuffle again' }}</button></div>
+            </div>
+
+            <!-- matching game -->
+            <div class="engine match" v-else-if="activity.engine === 'match'">
+              <div class="match-grid">
+                <div class="match-col">
+                  <button v-for="(p, i) in activity.pairs" :key="i" class="match-item left"
+                          :class="{ selected: a.selected === i, matched: a.matched.includes(i) }" :disabled="a.matched.includes(i)" v-on:click="matchPickLeft(i)">
+                    <i :class="['fa-solid', p.left.icon]"></i> {{ p.left.label }}
+                  </button>
+                </div>
+                <div class="match-col">
+                  <button v-for="r in a.right" :key="r.id" class="match-item"
+                          :class="{ matched: a.matched.includes(r.id), wrong: a.wrong === r.id }" :disabled="a.matched.includes(r.id)" v-on:click="matchPickRight(r)">{{ r.text }}</button>
+                </div>
+              </div>
+              <p class="feedback" :class="a.done ? 'ok' : (a.wrong >= 0 ? 'bad' : '')" role="status">
+                <span v-if="a.done">All matched! {{ a.mistakes === 0 ? 'Flawless.' : a.mistakes + ' wrong guess' + (a.mistakes === 1 ? '' : 'es') + ' along the way.' }}</span>
+                <span v-else-if="a.wrong >= 0">Not a match. Try another one.</span>
+                <span v-else-if="a.selected >= 0">Now choose its partner on the right.</span>
+                <span v-else>Choose something on the left first.</span>
+              </p>
+              <div class="engine-actions"><button class="btn btn-ghost" v-on:click="startActivity">{{ a.done ? 'Play again' : 'Shuffle again' }}</button></div>
+            </div>
+
+            <!-- sliders -->
+            <div class="engine slider-lab" v-else-if="activity.engine === 'slider'">
+              <div class="slider-layout">
+                <div class="slider-preview" v-if="activity.visual === 'photo'" :style="sliderResult.style">
+                  <i class="fa-solid fa-sun"></i><span class="hills"></span><i class="fa-solid fa-dove bird"></i>
+                </div>
+                <div class="slider-preview tube" v-else><span class="fill" :style="sliderFillStyle"></span></div>
+                <div class="slider-panel">
+                  <p class="goal-text"><i class="fa-solid fa-bullseye"></i> {{ activity.goalText }}</p>
+                  <label class="range" v-for="s in activity.sliders" :key="s.id">
+                    <span>{{ s.label }}: <strong>{{ a.values[s.id] }}{{ s.unit }}</strong></span>
+                    <input type="range" :min="s.min" :max="s.max" :step="s.step" v-model.number="a.values[s.id]" :disabled="a.solved">
+                  </label>
+                  <div class="meter" role="img">
+                    <span class="band" :style="sliderBandStyle"></span>
+                    <span class="needle" :style="{ left: sliderResult.meter + '%' }"></span>
+                  </div>
+                  <ul class="readouts"><li v-for="r in sliderResult.readouts" :key="r">{{ r }}</li></ul>
+                </div>
+              </div>
+              <p class="feedback" :class="a.solved ? 'ok' : (a.attempts ? 'bad' : '')" role="status">
+                {{ a.solved ? sliderResult.tip + ' Solved in ' + a.attempts + (a.attempts === 1 ? ' try.' : ' tries.') : (a.attempts ? sliderResult.tip : 'Move the sliders, then lock in your answer.') }}
+              </p>
+              <div class="engine-actions">
+                <button class="btn btn-yellow" v-on:click="sliderLockIn" :disabled="a.solved"><i class="fa-solid fa-lock"></i> Lock it in</button>
+                <button class="btn btn-ghost" v-on:click="sliderReset">Reset</button>
+              </div>
+            </div>
+
+            <!-- chess puzzle -->
+            <div class="engine chess" v-else-if="activity.engine === 'chess'">
+              <div class="chess-board" role="grid">
+                <button v-for="s in chessSquares" :key="s.sq" class="csq" :class="{ dark: s.dark, sel: s.sq === a.selected, legal: chessLegal.includes(s.sq) }"
+                        v-on:click="chessClick(s)">
+                  <span v-if="s.piece" class="piece" :class="s.piece.side"><i :class="['fa-solid', s.piece.icon]"></i></span>
+                </button>
+              </div>
+              <p class="feedback" :class="a.state" role="status">{{ a.message }}</p>
+              <div class="engine-actions">
+                <button class="btn btn-ghost" v-on:click="startActivity">{{ a.solved ? 'Play again' : 'Reset board' }}</button>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div v-else>
+          <p class="state small" v-if="reviewsLoading"><i class="fa-solid fa-spinner fa-spin-pulse"></i> Loading reviews…</p>
+          <div v-else>
+            <div class="review-summary" v-if="reviews.length">
+              <span class="big-rating">{{ reviewAverage.toFixed(1) }}</span>
+              <div>
+                <span class="stars">
+                  <i v-for="n in 5" :key="n" :class="starClass(reviewAverage, n)"></i>
+                </span>
+                <p class="muted">{{ reviews.length }} review{{ reviews.length === 1 ? '' : 's' }} from students and parents</p>
+              </div>
+            </div>
+            <p class="no-preview" v-else>No reviews yet. Be the first to share how it went!</p>
+
+            <form class="review-form" v-if="user && hasBought(previewLesson._id)" v-on:submit.prevent="submitReview">
+              <h3 class="modal-sub">{{ myReviewHere ? 'Update your review' : 'Rate this class' }}</h3>
+              <span class="stars editable">
+                <button type="button" 
+                        v-for="n in 5" :key="n" 
+                        class="star-btn" 
+                        v-on:click="reviewForm.rating = n" 
+                        v-on:mouseenter="reviewHover = n" 
+                        v-on:mouseleave="reviewHover = 0" 
+                        v-on:focus="reviewHover = n" 
+                        v-on:blur="reviewHover = 0">
+                  <i :class="n <= (reviewHover || reviewForm.rating) ? 'fa-solid fa-star' : 'fa-regular fa-star'"></i>
+                </button>
+              </span>
+              <label class="form-field">
+                <span class="sr-only">Your review</span>
+                <textarea v-model="reviewForm.comment" maxlength="400" rows="3" placeholder="What did you enjoy? (optional)"></textarea>
+              </label>
+              <div class="review-actions">
+                <button type="submit" class="btn btn-primary" :disabled="!reviewForm.rating || reviewBusy">
+                  {{ reviewBusy ? 'Saving…' : (myReviewHere ? 'Update review' : 'Post review') }}
+                </button>
+                <span class="muted">{{ reviewForm.comment.length }}/400</span>
+              </div>
+              <p class="field-error" v-if="reviewError" role="alert">{{ reviewError }}</p>
+              <p class="feedback ok" v-if="reviewSaved" role="status">Thanks! Your review is now visible to everyone.</p>
+            </form>
+            <p class="review-hint" v-else-if="user"><i class="fa-solid fa-ticket"></i> Book this class to leave a review. Only verified bookings can rate.</p>
+            <p class="review-hint" v-else>
+              <i class="fa-solid fa-user"></i> <button class="link" v-on:click="modalLogin">Log in</button> after booking this class to leave a review.
+            </p>
+
+            <ul class="review-list">
+              <li v-for="r in reviews" :key="r._id" class="review">
+                <span class="review-avatar">{{ r.name[0] }}</span>
+                <div>
+                  <p class="review-who">
+                    <strong>{{ r.name }}</strong> <span class="role-chip">{{ r.role }}</span> <span class="muted">{{ formatDate(r.createdAt) }}</span>
+                  </p>
+                  <span class="stars small"><i v-for="n in 5" :key="n" :class="starClass(r.rating, n)"></i></span>
+                  <p v-if="r.comment">{{ r.comment }}</p>
+                </div>
+              </li>
+            </ul>
+          </div>
+        </div>
+      </div>
+
+      <footer class="modal-foot">
+        <div>
+          <span class="price">{{ $money(previewLesson.price) }}</span> <span class="muted">{{ availableSpaces(previewLesson) }} {{ availableSpaces(previewLesson) === 1 ? 'space' : 'spaces' }} left</span>
+        </div>
+        <button class="btn btn-brown" v-on:click="addToCart(previewLesson)" :disabled="availableSpaces(previewLesson) <= 0">
+          <i class="fa-solid fa-basket-shopping"></i> Add to Cart
+        </button>
+      </footer>
     </div>
-  </main>
+  </div>
+
+  <div class="toast" v-if="toast" :key="toast.id"><i :class="['fa-solid', toast.icon]"></i> {{ toast.message }}</div>
 </div>
+
 <script src="js/content/categories.js"></script>
 <script src="js/content/quiz.js"></script>
 <script src="js/api.js"></script>
