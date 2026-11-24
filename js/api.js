@@ -68,6 +68,9 @@ const WonderlyAPI = {
     postOrder: function (order) {
         return sendJson('POST', '/orders', order);
     },
+    getMyOrders: function () {
+        return request('/orders/mine');
+    },
 
     // accounts
     signup: function (data) {
