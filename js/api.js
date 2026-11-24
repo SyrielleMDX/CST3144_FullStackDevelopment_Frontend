@@ -67,5 +67,35 @@ const WonderlyAPI = {
     // orders
     postOrder: function (order) {
         return sendJson('POST', '/orders', order);
+    },
+
+    // accounts
+    signup: function (data) {
+        return sendJson('POST', '/auth/signup', data).then(function (result) {
+            saveToken(result.token);
+            return result.user;
+        });
+    },
+    login: function (data) {
+        return sendJson('POST', '/auth/login', data).then(function (result) {
+            saveToken(result.token);
+            return result.user;
+        });
+    },
+    logout: function () {
+        removeToken();
+        return Promise.resolve();
+    },
+    getCurrentUser: function () {
+        if (!getToken()) 
+          return Promise.resolve(null);
+
+        return request('/auth/me').catch(function () { 
+          removeToken(); 
+          return null; 
+        });
+    },
+    updateProfile: function (data) {
+        return sendJson('PUT', '/auth/me', data);
     }
 }
