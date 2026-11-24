@@ -190,6 +190,27 @@
         </div>
       </section>
 
+      <section class="section tint">
+        <div class="container">
+          <div class="section-head">
+            <p class="eyebrow">For every age</p>
+            <h2>Little explorers to future leaders</h2>
+          </div>
+          <div class="age-grid">
+            <button class="age-card kids" v-on:click="openAge('kids')">
+              <strong>6–9</strong><span>Little explorers</span><small>Play, make and discover</small>
+            </button>
+            <button class="age-card tweens" v-on:click="openAge('tweens')">
+              <strong>10–13</strong><span>Rising creators</span><small>Build skills and confidence</small>
+            </button>
+            <button class="age-card teens" v-on:click="openAge('teens')">
+              <strong>14–18</strong><span>Future leaders</span><small>Real-world skills for what’s next</small>
+            </button>
+          </div>
+        </div>
+      </section>
+    </div>
+
     <!-- explore page -->
     <section v-if="view === 'explore'" class="page" :class="{ 'page-top': showGrid }">
       <div class="container">
@@ -262,40 +283,47 @@
       </div>
     </section>
 
-      <section class="section" v-if="!showPicks">
-        <div class="container">
-          <div class="promo">
-            <div>
-              <p class="eyebrow">1-minute quiz</p>
-              <h2>Not sure where to start?</h2>
-              <p>Answer five quick questions and we will suggest the classes that match their age, interests and energy.</p>
-            </div>
-            <button class="btn btn-brown btn-lg" v-on:click="go('quiz')">Take the quiz 
-              <span class="btn-dot light"><i class="fa-solid fa-arrow-right"></i></span>
-            </button>
-          </div>
+    <!-- quiz section -->
+    <section v-if="view === 'quiz'" class="page" :class="{ 'page-top': showGrid }">
+      <div class="container narrow">
+        <div v-if="quizMode === 'intro'" class="quiz-intro">
+          <p class="eyebrow">Find your fit</p>
+          <h1>Five questions, perfect classes</h1>
+          <p class="lead">Tell us about the learner and we will match them with classes for their age, interests and energy. It takes about a minute.</p>
+          <button class="btn btn-brown btn-lg" v-on:click="startQuiz">Start the quiz 
+            <span class="btn-dot light"><i class="fa-solid fa-arrow-right"></i></span>
+          </button>
         </div>
-      </section>
 
-      <section class="section tint">
-        <div class="container">
-          <div class="section-head">
-            <p class="eyebrow">For every age</p>
-            <h2>Little explorers to future leaders</h2>
+        <div v-else-if="quizMode === 'asking'" class="quiz-card">
+          <div class="quiz-progress">
+            <span :style="{ width: quizPercent + '%' }"></span>
           </div>
-          <div class="age-grid">
-            <button class="age-card kids" v-on:click="openAge('kids')">
-              <strong>6–9</strong><span>Little explorers</span><small>Play, make and discover</small>
-            </button>
-            <button class="age-card tweens" v-on:click="openAge('tweens')">
-              <strong>10–13</strong><span>Rising creators</span><small>Build skills and confidence</small>
-            </button>
-            <button class="age-card teens" v-on:click="openAge('teens')">
-              <strong>14–18</strong><span>Future leaders</span><small>Real-world skills for what’s next</small>
+          <p class="quiz-step">
+            Question {{ quizStep + 1 }} of {{ quizQuestions.length }}
+          </p>
+          <h2>{{ currentQuestion.question }}</h2>
+          <p class="muted">{{ currentQuestion.hint }}</p>
+          <div class="quiz-choices">
+            <button v-for="(o, i) in currentQuestion.options" 
+                    :key="i" 
+                    class="quiz-choice" 
+                    :class="{ chosen: quizAnswers[quizStep] === i }" 
+                    v-on:click="answerQuiz(i)">
+              <span class="choice-icon"><i :class="['fa-solid', o.icon]"></i></span> {{ o.label }}
             </button>
           </div>
+          <button class="btn btn-ghost" v-on:click="quizBack"><i class="fa-solid fa-arrow-left"></i> Back</button>
         </div>
-      </section>
+
+        <div v-else class="quiz-results">
+          <p class="eyebrow">Your results</p>
+          <h1>Picked for you</h1>
+          <p class="lead" v-if="quizSummary">{{ quizSummary }}</p>
+          <p class="state" v-if="!picks.length">We couldn’t find a match yet. Try retaking the quiz.</p>
+        </div>
+      </div>
+    </section>
 
     <!-- teachers page -->
     <section v-if="view === 'teachers'" class="page" :class="{ 'page-top': showGrid }">
@@ -1034,6 +1062,35 @@
       </div>
     </section>
 
+    <!-- discovery map -->
+    <section v-if="view === 'tryit' || (view === 'profile' && user)" class="container page-end">
+      <div class="discovery">
+        <div class="discovery-head">
+          <div>
+            <p class="eyebrow">Your discovery map</p>
+            <h2 id="discovery-title">What are you good at?</h2>
+            <p class="muted-light" v-if="!discoveryDone">Try a few mini activities and your map fills in, then your suggestions get smarter.</p>
+            <p class="muted-light" v-else>
+              You have tried {{ discoveryDone }} of {{ discoveryAll }} activities<span v-if="discoveryTop"> and you shine at <strong>{{ discoveryTop.label }}</strong></span>.
+            </p>
+          </div>
+          <span class="discovery-count">{{ discoveryDone }}<small>/{{ discoveryAll }}</small></span>
+        </div>
+        <ul class="discovery-grid">
+          <li v-for="row in discoveryRows" :key="row.cat.id" class="discovery-row" :class="'cat-' + row.cat.id">
+            <button class="discovery-label" v-on:click="pickTryCategory(row.cat.id)">
+              <i :class="['fa-solid', row.cat.icon]"></i> {{ row.cat.label }}
+              <span>{{ row.doneCount }}/{{ row.items.length }}</span>
+            </button>
+            <div class="dots">
+              <span v-for="item in row.items" :key="item.id" class="dot" :class="{ on: item.done }" :title="item.title + (item.done ? ' (tried)' : '')"></span>
+            </div>
+          </li>
+        </ul>
+      </div>
+    </section>
+  </main>
+
   <!-- class window: details and reviews -->
   <div class="modal-backdrop" v-if="previewLesson" v-on:click.self="closePreview">
     <div class="modal" role="dialog">
@@ -1358,9 +1415,13 @@
   <div class="toast" v-if="toast" :key="toast.id"><i :class="['fa-solid', toast.icon]"></i> {{ toast.message }}</div>
 </div>
 
+<script src="js/content/activities.js"></script>
 <script src="js/content/categories.js"></script>
 <script src="js/content/quiz.js"></script>
+
 <script src="js/api.js"></script>
+<script src="js/activity_methods.js"></script>
 <script src="js/app.js"></script>
+
 </body>
 </html>
