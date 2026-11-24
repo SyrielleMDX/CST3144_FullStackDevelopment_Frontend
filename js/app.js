@@ -745,6 +745,23 @@ const app = Vue.createApp({
                 .then(user => { this.user = user; this.profileMsg = 'Profile saved.'; })
                 .catch(err => { this.profileError = err.message; })
                 .finally(() => { this.profileBusy = false; });
+        },
+
+        // footer
+        subscribe() {
+            if (!EMAIL_PATTERN.test(this.newsletterEmail)) 
+                { 
+                    this.newsletterError = 'Please enter a valid email.'; 
+                    return; 
+                }
+            this.newsletterError = '';
+            this.newsletterEmail = '';
+            this.showToast('You are on the list! Watch your inbox.', 'fa-envelope-circle-check');
+        },
+        showToast(message, icon) {
+            clearTimeout(this.toastTimer);
+            this.toast = { message: message, icon: icon, id: Date.now() };
+            this.toastTimer = setTimeout(() => { this.toast = null; }, 4000);
         }
     })
 });
