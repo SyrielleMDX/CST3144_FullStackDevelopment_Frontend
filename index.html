@@ -1091,6 +1091,78 @@
     </section>
   </main>
 
+  <!-- footer -->
+  <footer class="site-footer">
+    <svg class="sticker foot-deco foot-deco-1" viewBox="0 0 100 100" color="#FFD45C">
+      <use href="#sticker-squiggle"/>
+    </svg>
+    <svg class="sticker foot-deco foot-deco-2" viewBox="0 0 100 100" color="#FF8FA6">
+      <use href="#sticker-spark"/>
+    </svg>
+    <div class="container">
+      <div class="footer-top">
+        <div class="footer-brand">
+          <a href="#" class="brand light" v-on:click.prevent="go('home')">
+            <span class="brand-mark">
+              <svg class="sticker" viewBox="0 0 100 100" color="#FFD45C">
+                <use href="#sticker-flower"/>
+              </svg>
+                <i class="fa-solid fa-star"]></i>
+            </span> Wonderly
+          </a>
+          <p>Find your next favourite thing. After-school classes and activities for curious people aged 6 to 18.</p>
+          <form class="newsletter" v-on:submit.prevent="subscribe" novalidate>
+            <label for="newsletter" class="sr-only">Email for our newsletter</label>
+            <input id="newsletter" type="email" v-model.trim="newsletterEmail" placeholder="Your email for class news">
+            <button type="submit" class="btn btn-yellow">Subscribe</button>
+          </form>
+          <p class="field-error light" v-if="newsletterError" role="alert">{{ newsletterError }}</p>
+          <ul class="socials">
+            <li><a href="#" v-on:click.prevent><i class="fa-brands fa-instagram"></i></a></li>
+            <li><a href="#" v-on:click.prevent><i class="fa-brands fa-facebook-f"></i></a></li>
+            <li><a href="#" v-on:click.prevent><i class="fa-brands fa-tiktok"></i></a></li>
+            <li><a href="#" v-on:click.prevent><i class="fa-brands fa-youtube"></i></a></li>
+          </ul>
+        </div>
+        <nav class="footer-col">
+          <h3>Explore</h3>
+          <button v-on:click="go('explore')">All classes</button>
+          <button v-on:click="go('tryit')">Try it</button>
+          <button v-on:click="go('quiz')">Find your fit</button>
+          <button v-on:click="go('teachers')">Teachers</button>
+        </nav>
+        <nav class="footer-col">
+          <h3>By age</h3>
+          <button v-on:click="openAge('kids')">Ages 6–9</button>
+          <button v-on:click="openAge('tweens')">Ages 10–13</button>
+          <button v-on:click="openAge('teens')">Ages 14–18</button>
+        </nav>
+        <nav class="footer-col">
+          <h3>Your account</h3>
+          <button v-if="!user" v-on:click="openAuth('login')">Log in</button>
+          <button v-if="!user" v-on:click="openAuth('signup')">Sign up</button>
+          <button v-if="user" v-on:click="go('profile')">My profile</button>
+          <button v-if="user" v-on:click="go('history')">My bookings</button>
+        </nav>
+        <div class="footer-col contact">
+          <h3>Say hello</h3>
+          <p><i class="fa-solid fa-envelope"></i> wonderly@gmail.com</p>
+          <p><i class="fa-solid fa-phone"></i> 5550 0123</p>
+          <p><i class="fa-regular fa-clock"></i> Mon–Fri, 8am–6pm</p>
+        </div>
+      </div>
+      <div class="footer-bottom">
+        <p>
+          <i class="fa-regular fa-copyright"></i>
+          2026 Wonderly. After the bell, curious minds excel.
+        </p>
+        <div class="footer-links">
+          <button v-on:click="go('home')">Back to top <i class="fa-solid fa-arrow-up"></i></button>
+        </div>
+      </div>
+    </div>
+  </footer>
+
   <!-- class window: details and reviews -->
   <div class="modal-backdrop" v-if="previewLesson" v-on:click.self="closePreview">
     <div class="modal" role="dialog">
