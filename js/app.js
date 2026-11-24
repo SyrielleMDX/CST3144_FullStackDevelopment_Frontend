@@ -39,6 +39,31 @@ const app = Vue.createApp({
             selectedTeacherId: null,
             teacherLessons: [],
 
+            // cart + checkout
+            cart: [], 
+            name: '',
+            phone: '',
+            submitting: false,
+            orderError: '',
+            confirmation: null,
+            confetti: [],
+
+            // account
+            user: null,
+            authMode: 'login',
+            authReturn: null,
+            authError: '',
+            authBusy: false,
+            showPassword: false,
+            authForm: { role: 'parent', name: '', email: '', phone: '', age: '', password: '' },
+            profileForm: { name: '', phone: '', age: '' },
+            profileMsg: '',
+            profileError: '',
+            profileBusy: false,
+            myOrders: [],
+            myReviews: {},
+            historyLoading: false,
+
             // notifications
             toast: null,
             toastTimer: null,
@@ -396,6 +421,76 @@ const app = Vue.createApp({
             WonderlyAPI.getLessons({ teacherId: teacherId })
                 .then(lessons => { if (this.selectedTeacherId === teacherId) this.teacherLessons = lessons; })
                 .catch(err => { this.error = err.message; });
+        },
+    
+        // account
+        openAuth(mode) {
+            this.authMode = mode;
+            this.authError = '';
+            if (this.view !== 'auth') 
+                this.authReturn = this.view === 'cart' ? 'cart' : null;   
+            this.view = 'auth';
+            this.menuOpen = false;
+            this.previewLesson = null;
+            window.scrollTo({ top: 0 });
+        },
+        submitAuth() {
+            if (this.authBusy) return;
+            const f = this.authForm;
+            this.authError = '';
+            if (this.authMode === 'signup') {
+                if (!NAME_PATTERN.test(f.name)) { 
+                    this.authError = 'Name can only contain letters and spaces.'; 
+                    return; 
+                }
+                if (!EMAIL_PATTERN.test(f.email)) { 
+                    this.authError = 'Please enter a valid email address.'; 
+                    return; 
+                }
+                if (f.phone && !PHONE_PATTERN.test(f.phone)) { 
+                    this.authError = 'Phone can only contain numbers.'; 
+                    return; 
+                }
+                if (f.password.length < 6) { 
+                    this.authError = 'Password must be at least 6 characters.'; 
+                    return; 
+                }
+            } else if (!f.email || !f.password) {
+                this.authError = 'Enter your email and password.';
+                return;
+            }
+            this.authBusy = true;
+            const request = this.authMode === 'signup'
+                ? WonderlyAPI.signup({ role: f.role, name: f.name, email: f.email, phone: f.phone, age: f.age, password: f.password })
+                : WonderlyAPI.login({ email: f.email, password: f.password });
+            request
+                .then(user => {
+                    const back = this.authReturn && this.authReturn !== 'auth' ? this.authReturn : 'profile';
+                    this.setUser(user);
+                    this.authForm = { role: 'parent', name: '', email: '', phone: '', age: '', password: '' };
+                    this.showToast((this.authMode === 'signup' ? 'Welcome to Wonderly, ' : 'Welcome back, ') + user.name.split(' ')[0] + '!', 'fa-face-smile');
+                    this.go(back);
+                })
+                .catch(err => { this.authError = err.message; })
+                .finally(() => { this.authBusy = false; });
+        },
+        setUser(user) {
+            this.user = user;
+            this.profileForm = { name: user.name, phone: user.phone || '', age: user.age || '' };
+            if (!this.name) this.name = user.name;
+            if (!this.phone) this.phone = user.phone || '';
+            return Promise.all([this.loadMyOrders(), this.loadMyReviews()]);
+        },
+        logout() {
+            WonderlyAPI.logout().then(() => {
+                this.user = null;
+                this.myOrders = [];
+                this.myReviews = {};
+                this.name = '';
+                this.phone = '';
+                this.showToast('You are logged out. See you soon!', 'fa-hand');
+                this.go('home');
+            });
         }
     })
 });
