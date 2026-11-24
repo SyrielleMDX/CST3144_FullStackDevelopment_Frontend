@@ -185,6 +185,14 @@ const app = Vue.createApp({
         },
         selectedTeacher() { 
             return this.teachers.find(t => t._id === this.selectedTeacherId) || null; 
+        },
+
+        // profile
+        placesBooked() { 
+            return this.myOrders.reduce((s, o) => s + o.items.reduce((n, i) => n + i.quantity, 0), 0); 
+        },
+        reviewCount() { 
+            return Object.keys(this.myReviews).length; 
         }
     }),
 
@@ -491,6 +499,35 @@ const app = Vue.createApp({
                 this.showToast('You are logged out. See you soon!', 'fa-hand');
                 this.go('home');
             });
+        },
+        loadMyOrders() {
+            if (!this.user) 
+                return Promise.resolve();
+            this.historyLoading = true;
+            return WonderlyAPI.getMyOrders().then(o => { this.myOrders = o; }).catch(() => {}).finally(() => { this.historyLoading = false; });
+        },
+        loadMyReviews() {
+            return WonderlyAPI.getMyReviews()
+                .then(list => { this.myReviews = Object.fromEntries(list.map(r => [r.lessonId, r])); })
+                .catch(() => {});
+        },
+        saveProfile() {
+            const f = this.profileForm;
+            this.profileMsg = '';
+            this.profileError = '';
+            if (!NAME_PATTERN.test(f.name)) { 
+                this.profileError = 'Name can only contain letters and spaces.'; 
+                return; 
+            }
+            if (f.phone && !PHONE_PATTERN.test(String(f.phone))) { 
+                this.profileError = 'Phone can only contain numbers.'; 
+                return; 
+            }
+            this.profileBusy = true;
+            WonderlyAPI.updateProfile({ name: f.name, phone: String(f.phone || ''), age: f.age })
+                .then(user => { this.user = user; this.profileMsg = 'Profile saved.'; })
+                .catch(err => { this.profileError = err.message; })
+                .finally(() => { this.profileBusy = false; });
         }
     })
 });
