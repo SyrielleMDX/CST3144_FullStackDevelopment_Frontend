@@ -1,8 +1,26 @@
 const NAME_PATTERN = /^[A-Za-z ]+$/; // letters only
 const PHONE_PATTERN = /^[0-9]+$/; // digits only
+const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+const DISCOVERY_KEY = 'activity_progress';
+const QUIZ_KEY = 'quiz_result';
 
 function formatPrice(amount) {
     return 'Rs ' + Number(amount).toLocaleString('en-US');
+}
+function loadJSON(key, fallback) {
+    try { 
+        const raw = localStorage.getItem(key); 
+        return raw ? JSON.parse(raw) : fallback; 
+    } catch (e) { 
+        return fallback; 
+    }
+}
+function saveJSON(key, value) {
+    try { 
+        localStorage.setItem(key, JSON.stringify(value)); 
+    } catch (e) { 
+        console.error('Could not save data: ', e)
+    }
 }
 
 const app = Vue.createApp({
@@ -207,6 +225,17 @@ const app = Vue.createApp({
                 return this.showPicks ? this.picks.map(p => p.lesson) : this.popularLessons;
             return [];
         },
+        pickInfo() {
+            const info = {};
+            this.picks.forEach((p, i) => { 
+                info[p.lesson._id] = { 
+                                    rank: i + 1, 
+                                    level: p.level, 
+                                    reasons: p.reasons 
+                                    }; 
+            });
+            return info;
+        },
 
         // teachers
         featuredTeachers() { 
@@ -232,6 +261,30 @@ const app = Vue.createApp({
         },
         currentActivityLesson() { 
             return this.catalogue.find(l => l.previewType === this.currentActivityId) || null; 
+        },
+
+        // discovery map
+        discoveryRows() {
+            return this.categories.map(cat => {
+                const items = this.catalogue.filter(l => ACTIVITIES[l.previewType] && categoryOf(l.topic) === cat.id).map(l => {
+                    const record = this.discovery.tried[l.previewType];
+                    return { id: l.previewType, title: l.title, done: !!record, ratio: record ? record.score / record.max : 0 };
+                });
+                const done = items.filter(i => i.done);
+                const strength = done.length ? done.reduce((sum, i) => sum + i.ratio, 0) / done.length : 0;
+                return { cat: cat, items: items, doneCount: done.length, strength: strength };
+            });
+        },
+        discoveryDone() { 
+          return this.discoveryRows.reduce((sum, r) => sum + r.doneCount, 0); 
+        },
+        discoveryAll() { 
+          return this.discoveryRows.reduce((sum, r) => sum + r.items.length, 0); 
+        },
+        discoveryTop() {
+            const tried = this.discoveryRows.filter(r => r.doneCount);
+            tried.sort((a, b) => b.strength * b.doneCount - a.strength * a.doneCount);
+            return tried.length ? tried[0].cat : null;
         },
 
         // quiz to find lessons
@@ -594,7 +647,7 @@ const app = Vue.createApp({
             window.scrollTo({ top: 0 });
             this.showToast('Your picks are ready!', 'fa-wand-magic-sparkles');
         },
-        
+
         // account
         openAuth(mode) {
             this.authMode = mode;
