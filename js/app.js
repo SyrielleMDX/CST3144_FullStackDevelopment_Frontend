@@ -75,6 +75,14 @@ const app = Vue.createApp({
             reviewError: '',
             reviewSaved: false,
 
+            // quiz and discovery map
+            quizQuestions: QUIZ,
+            quizMode: 'intro',
+            quizStep: 0,
+            quizAnswers: [],
+            quizResult: loadJSON(QUIZ_KEY, null),
+            discovery: loadJSON(DISCOVERY_KEY, { tried: {} }),
+
             // activities to try page
             tryCategory: 'all',
             activeActivity: '',
@@ -226,6 +234,30 @@ const app = Vue.createApp({
             return this.catalogue.find(l => l.previewType === this.currentActivityId) || null; 
         },
 
+        // quiz to find lessons
+        currentQuestion() { 
+            return this.quizQuestions[this.quizStep]; 
+        },
+        quizPercent() { 
+            return Math.round((this.quizStep / this.quizQuestions.length) * 100); 
+        },
+        recommended() {
+            return this.quizResult ? scoreLessons(this.catalogue, this.quizResult.answers, this.discovery.tried) : [];
+        },
+        picks() {
+            const list = this.recommended.slice(0, 4);
+            const top = list.length ? list[0].score : 0;
+            return list.map((p, i) => Object.assign({}, p, {
+                level: i === 0 ? 'Best match' : (top && p.score >= top * 0.75 ? 'Great match' : 'Good match')
+            }));
+        },
+        quizSummary() {
+            if (!this.quizResult) 
+                return '';
+            const group = ageGroupOf(this.quizResult.answers);
+            const fun = QUIZ[1].options[this.quizResult.answers[1]];
+            return (group ? 'Ages ' + group.label : '') + (fun ? ' - ' + fun.label : '');
+        },
 
         // profile
         placesBooked() { 
@@ -301,6 +333,11 @@ const app = Vue.createApp({
                 this.go('explore');
             else if (this.cartCount > 0) 
                 this.go('cart');
+        },
+        openChallenge(activityId) { 
+            this.activeActivity = activityId; 
+            this.tryCategory = 'all'; 
+            this.go('tryit'); 
         },
         matchesAge(lesson) {
             if (this.ageGroup === 'all') 
@@ -531,6 +568,33 @@ const app = Vue.createApp({
             this.go('tryit'); 
         },
     
+        // quiz to find lessons
+        startQuiz() { 
+            this.quizAnswers = []; 
+            this.quizStep = 0; 
+            this.quizMode = 'asking'; 
+        },
+        answerQuiz(optionIndex) {
+            this.quizAnswers.splice(this.quizStep, 1, optionIndex);
+            if (this.quizStep < this.quizQuestions.length - 1) 
+                this.quizStep++;
+            else this.finishQuiz();
+        },
+        quizBack() {
+            if (this.quizStep > 0) this.quizStep--;
+            else this.quizMode = this.quizResult ? 'results' : 'intro';
+        },
+        finishQuiz() {
+            this.quizResult = { 
+                answers: this.quizAnswers.slice(), 
+                date: new Date().toISOString() 
+            };
+            saveJSON(QUIZ_KEY, this.quizResult);
+            this.quizMode = 'results';
+            window.scrollTo({ top: 0 });
+            this.showToast('Your picks are ready!', 'fa-wand-magic-sparkles');
+        },
+        
         // account
         openAuth(mode) {
             this.authMode = mode;
