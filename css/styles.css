@@ -436,6 +436,117 @@ ul, ol {
   margin-bottom: .5rem; 
 }
 
+.profile-head { 
+  display: flex; 
+  flex-wrap: wrap; 
+  align-items: center; 
+  gap: 1.5rem; 
+  margin-bottom: 1.5rem; 
+}
+.profile-head > div:nth-child(2) { 
+  flex: 1; min-width: 220px; 
+}
+.stat-row { 
+  display: grid; 
+  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); 
+  gap: .8rem; margin-bottom: 1.5rem; 
+}
+.stat { 
+  display: flex; 
+  flex-direction: column; 
+  padding: 1rem 1.2rem; 
+  border: 2px solid #3F2620; 
+  border-radius: 22px; 
+  background: #FFFBF3; 
+  text-align: left; 
+}
+.stat strong { 
+  font-family: var(--font-display); 
+  font-size: 2.2rem; line-height: 1; 
+} 
+.stat span { 
+  color: #7A6258; 
+}
+button.stat:hover { 
+  background: #FFE9A8; 
+}
+.profile-grid { 
+  display: grid; 
+  grid-template-columns: 1.2fr 1fr; 
+  gap: 1.2rem; 
+}
+.panel { 
+  padding: 1.5rem; 
+  border: 2px solid #3F2620; 
+  border-radius: 26px; 
+  background: #FFFBF3; 
+}
+.mini-list { 
+  display: grid; 
+  gap: .5rem; 
+  margin: .8rem 0 1rem; 
+}
+.mini-pick { 
+  display: flex; 
+  align-items: center; 
+  gap: .7rem; 
+  width: 100%; 
+  text-align: left; 
+  padding: .5rem .7rem; 
+  border: 2px solid #EBD9C2; 
+  border-radius: 16px; 
+  background: #FFF6E9; 
+}
+.mini-pick small { 
+  display: block; 
+  color: #7A6258; 
+}
+.order-history { 
+  display: grid; 
+  gap: 1rem; 
+}
+.history-card { 
+  padding: 1.3rem; 
+  border: 2px solid #3F2620; 
+  border-radius: 26px; 
+  background: #FFFBF3; 
+}
+.history-head { 
+  display: flex; 
+  justify-content: space-between; 
+  align-items: center; 
+  gap: 1rem; 
+  padding-bottom: .7rem; 
+  margin-bottom: .7rem; 
+  border-bottom: 2px dashed #EBD9C2; 
+}
+.history-total { 
+  font-family: var(--font-display); 
+  font-size: 1.4rem; font-weight: 800; 
+}
+.history-items { 
+  display: grid; 
+  gap: .9rem; 
+}
+.history-items > li { 
+  display: flex; 
+  flex-wrap: wrap; 
+  justify-content: space-between; 
+  align-items: center; 
+  gap: .6rem; 
+}
+.history-actions { 
+  display: flex; 
+  gap: .5rem; 
+  flex-wrap: wrap; 
+}
+.your-rating { 
+  display: flex; 
+  align-items: center; 
+  gap: .4rem; 
+  margin-top: .2rem; 
+}
+
 /* styling for cart */
 .cart-layout { 
   display: grid; 
