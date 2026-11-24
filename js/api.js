@@ -100,5 +100,19 @@ const WonderlyAPI = {
     },
     updateProfile: function (data) {
         return sendJson('PUT', '/auth/me', data);
+    },
+
+    // reviews
+    getReviews: function (lessonId) {
+        return request('/reviews/' + lessonId);
+    },
+    getReviewSummaries: function () {
+        return request('/reviews/summary');
+    },
+    getMyReviews: function () {
+        return request('/reviews/mine');
+    },
+    postReview: function (review) {
+        return sendJson('POST', '/reviews', review);
     }
-}
+};
