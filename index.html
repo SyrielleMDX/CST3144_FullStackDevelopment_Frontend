@@ -859,6 +859,75 @@
       </div>
     </section>
 
+    <!-- login/signup -->
+    <section v-if="view === 'auth'" class="page">
+      <div class="container narrow">
+        <div class="auth-card">
+          <svg class="sticker auth-sticker" viewBox="0 0 100 100" color="#FF8FA6">
+            <use href="#sticker-spark"/>
+          </svg>
+          <div class="segmented wide">
+            <button role="tab" :class="{ active: authMode === 'login' }" v-on:click="authMode = 'login'; authError = ''">Log in</button>
+            <button role="tab" :class="{ active: authMode === 'signup' }" v-on:click="authMode = 'signup'; authError = ''">Sign up</button>
+          </div>
+          <h1>{{ authMode === 'login' ? 'Welcome back' : 'Join Wonderly' }}</h1>
+          <p class="muted">{{ authMode === 'login' ? 'Log in to see your bookings and leave reviews.' : 'Create a free profile to track bookings and review your classes.' }}</p>
+
+          <form v-on:submit.prevent="submitAuth" novalidate>
+            <div class="role-picker" v-if="authMode === 'signup'">
+              <button type="button" 
+                      :class="{ active: authForm.role === 'parent' }" 
+                      v-on:click="authForm.role = 'parent'">
+                <i class="fa-solid fa-user-group"></i> I’m a parent
+              </button>
+              <button type="button" 
+                      :class="{ active: authForm.role === 'student' }" 
+                      v-on:click="authForm.role = 'student'">
+                <i class="fa-solid fa-user-graduate"></i> I’m a student
+              </button>
+            </div>
+            <label class="form-field" v-if="authMode === 'signup'"><span>Full name</span>
+              <input type="text" v-model.trim="authForm.name" autocomplete="name" placeholder="e.g. Stephanie Soo"></label>
+            <label class="form-field"><span>Email</span>
+              <input type="email" v-model.trim="authForm.email" autocomplete="email" placeholder="you@example.com"></label>
+            <div class="form-row" v-if="authMode === 'signup'">
+              <label class="form-field"><span>Phone (optional)</span>
+                <input type="tel" inputmode="numeric" v-model.trim="authForm.phone" autocomplete="tel" placeholder="5712345678"></label>
+              <label class="form-field"><span>{{ authForm.role === 'parent' ? 'Child’s age' : 'Your age' }}</span>
+                <select v-model="authForm.age">
+                  <option value="">Choose</option>
+                  <option v-for="n in 13" :key="n" :value="n + 5">{{ n + 5 }}</option>
+                </select>
+              </label>
+            </div>
+            <label class="form-field"><span>Password</span>
+              <span class="password-wrap">
+                <input :type="showPassword ? 'text' : 'password'" 
+                        v-model="authForm.password" 
+                        :autocomplete="authMode === 'login' ? 'current-password' : 'new-password'" 
+                        placeholder="At least 6 characters">
+                <button type="button" 
+                        class="icon-btn" 
+                        v-on:click="showPassword = !showPassword">
+                  <i class="fa-regular" :class="showPassword ? 'fa-eye-slash' : 'fa-eye'"></i>
+                </button>
+              </span></label>
+            <p class="field-error" v-if="authError" role="alert">{{ authError }}</p>
+            <button type="submit" class="btn btn-brown btn-lg btn-block" :disabled="authBusy">
+              <i class="fa-solid fa-spinner fa-spin-pulse" v-if="authBusy"></i>
+              {{ authBusy ? 'One moment…' : (authMode === 'login' ? 'Log in' : 'Create my account') }}
+            </button>
+          </form>
+          <p class="muted center">{{ authMode === 'login' ? 'New here?' : 'Already have an account?' }}
+            <button class="link" 
+                    v-on:click="authMode = authMode === 'login' ? 'signup' : 'login'; authError = ''">
+              {{ authMode === 'login' ? 'Create an account' : 'Log in' }}
+            </button>
+          </p>
+        </div>
+      </div>
+    </section>
+
     <!-- profile -->
     <section v-if="view === 'profile' && user" class="page page-top">
       <div class="container">
@@ -1494,6 +1563,5 @@
 <script src="js/api.js"></script>
 <script src="js/activity_methods.js"></script>
 <script src="js/app.js"></script>
-
 </body>
 </html>
