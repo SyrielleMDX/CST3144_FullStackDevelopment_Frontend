@@ -64,6 +64,17 @@ const app = Vue.createApp({
             myReviews: {},
             historyLoading: false,
 
+            // class window
+            previewLesson: null,
+            modalTab: 'about',
+            reviews: [],
+            reviewsLoading: false,
+            reviewForm: { rating: 0, comment: '' },
+            reviewHover: 0,
+            reviewBusy: false,
+            reviewError: '',
+            reviewSaved: false,
+
             // notifications
             toast: null,
             toastTimer: null,
@@ -338,6 +349,13 @@ const app = Vue.createApp({
             return API_BASE_URL + '/images/' + file;
         },
 
+        // star icons for rating
+        starClass(rating, n) {
+            const diff = rating - n + 1;
+            if (diff >= 1) return 'fa-solid fa-star';
+            if (diff >= 0.5) return 'fa-solid fa-star-half-stroke';
+            return 'fa-regular fa-star';
+        },
         cartQty(lessonId) {
             const item = this.cart.find(i => i.lesson._id === lessonId);
             return item ? item.quantity : 0;
@@ -416,6 +434,39 @@ const app = Vue.createApp({
                 animationDelay: Math.random() * 0.8 + 's',
                 animationDuration: 2.2 + Math.random() * 1.8 + 's'
             }));
+        },
+
+        loadModalReviews() {
+            const lesson = this.previewLesson;
+            if (!lesson) 
+                return Promise.resolve();
+            this.reviewsLoading = true;
+            return WonderlyAPI.getReviews(lesson._id)
+                .then(list => {
+                    if (!this.previewLesson || this.previewLesson._id !== lesson._id) 
+                        return;
+                    this.reviews = list;
+                    if (this.myReviewHere) 
+                        this.reviewForm = { rating: this.myReviewHere.rating, comment: this.myReviewHere.comment };
+                })
+                .catch(() => { this.reviews = []; })
+                .finally(() => { this.reviewsLoading = false; });
+        },
+        submitReview() {
+            if (!this.reviewForm.rating || this.reviewBusy) 
+                return;
+            this.reviewBusy = true;
+            this.reviewError = '';
+            this.reviewSaved = false;
+            WonderlyAPI.postReview({ lessonId: this.previewLesson._id, rating: this.reviewForm.rating, comment: this.reviewForm.comment })
+                .then(() => {
+                    this.reviewSaved = true;
+                    this.loadRatings();
+                    this.loadMyReviews();
+                    return this.loadModalReviews();
+                })
+                .catch(err => { this.reviewError = err.message; })
+                .finally(() => { this.reviewBusy = false; });
         },
 
         openTeacher(teacherId) {
