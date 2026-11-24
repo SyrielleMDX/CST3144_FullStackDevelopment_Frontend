@@ -75,6 +75,16 @@ const app = Vue.createApp({
             reviewError: '',
             reviewSaved: false,
 
+            // activities to try page
+            tryCategory: 'all',
+            activeActivity: '',
+            a: {}, // activity state
+            robotTimer: null,
+            wrongTimer: null,
+            rhythmTimers: [],
+            audioCtx: null,
+            robotArrows: { up: 'fa-arrow-up', down: 'fa-arrow-down', left: 'fa-arrow-left', right: 'fa-arrow-right' },
+
             // notifications
             toast: null,
             toastTimer: null,
@@ -198,6 +208,25 @@ const app = Vue.createApp({
             return this.teachers.find(t => t._id === this.selectedTeacherId) || null; 
         },
 
+        // activities for each lesson
+        activityLessons() {
+            return this.catalogue.filter(l => ACTIVITIES[l.previewType] &&
+                (this.tryCategory === 'all' || categoryOf(l.topic) === this.tryCategory) && this.matchesAge(l));
+        },
+        currentActivityId() {
+            if (this.previewLesson && this.modalTab === 'try') 
+                return this.previewLesson.previewType;
+            const ids = this.activityLessons.map(l => l.previewType);
+            return ids.includes(this.activeActivity) ? this.activeActivity : (ids[0] || '');
+        },
+        activity() { 
+            return ACTIVITIES[this.currentActivityId] || null; 
+        },
+        currentActivityLesson() { 
+            return this.catalogue.find(l => l.previewType === this.currentActivityId) || null; 
+        },
+
+
         // profile
         placesBooked() { 
             return this.myOrders.reduce((s, o) => s + o.items.reduce((n, i) => n + i.quantity, 0), 0); 
@@ -214,6 +243,9 @@ const app = Vue.createApp({
         cartCount(count) {
             if (count === 0 && this.view === 'cart' && !this.confirmation) 
                 this.go('explore');
+        },
+        currentActivityId() { 
+            this.startActivity(); 
         }
     },
 
@@ -480,6 +512,23 @@ const app = Vue.createApp({
             WonderlyAPI.getLessons({ teacherId: teacherId })
                 .then(lessons => { if (this.selectedTeacherId === teacherId) this.teacherLessons = lessons; })
                 .catch(err => { this.error = err.message; });
+        },
+
+        // activities and discovery map
+        selectActivity(id) { 
+            this.activeActivity = id; 
+        },
+        onActivityComplete(result) {
+            const before = this.discovery.tried[result.id];
+            if (!before || result.score / result.max > before.score / before.max) {
+                this.discovery = { tried: Object.assign({}, this.discovery.tried, { [result.id]: { score: result.score, max: result.max } }) };
+                saveJSON(DISCOVERY_KEY, this.discovery);
+            }
+            this.showToast(ACTIVITIES[result.id].title + ': ' + result.score + '/' + result.max + '. Added to your discovery map', 'fa-map-location-dot');
+        },
+        pickTryCategory(id) { 
+            this.tryCategory = id; 
+            this.go('tryit'); 
         },
     
         // account
