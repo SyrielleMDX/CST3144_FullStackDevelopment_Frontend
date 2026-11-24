@@ -715,3 +715,215 @@ button.stat:hover {
     opacity: 0; 
   } 
 }
+
+/* modals */
+.modal-backdrop { 
+  position: fixed; 
+  inset: 0; 
+  z-index: 60; 
+  display: grid; 
+  place-items: center; 
+  padding: 1rem; 
+  background: rgba(63, 38, 32, .6); 
+  animation: fade .2s; 
+}
+.modal { 
+  display: flex; 
+  flex-direction: column; 
+  width: min(780px, 100%); 
+  max-height: 92vh; 
+  overflow: hidden; 
+  background: #FFF6E9; 
+  border: 3px solid #3F2620; 
+  border-radius: 30px; 
+  box-shadow: 10px 10px 0 #3F2620; 
+  animation: pop .25s; 
+}
+.modal-head { 
+  position: relative; 
+  display: flex; 
+  gap: 1rem; 
+  align-items: center; 
+  padding: 1.4rem 4rem 1.4rem 1.5rem; 
+}
+.modal-head.cat-build { 
+  background: #B7E6C6; 
+} 
+.modal-head.cat-make { 
+  background: #FFC0CC; 
+} 
+.modal-head.cat-move { 
+  background: #FFC49A; 
+}
+.modal-head.cat-explore { 
+  background: #FFE08A; 
+} 
+.modal-head.cat-think { 
+  background: #BBDBFF; 
+}
+.modal-head h2 { 
+  margin: 0; 
+}
+.modal-meta { 
+  display: flex; 
+  flex-wrap: wrap; 
+  gap: .3rem 1rem; 
+  margin: .4rem 0 0; 
+  font-size: .92rem; 
+}
+.modal-close { 
+  position: absolute; 
+  top: 1rem; 
+  right: 1rem; 
+  width: 2.5rem; 
+  height: 2.5rem; 
+  border-radius: 50%; 
+  border: 2px solid #3F2620; 
+  background: #FFFBF3; 
+}
+.modal-tabs { 
+  display: flex; 
+  gap: .3rem; 
+  padding: .7rem 1.2rem 0; 
+  border-bottom: 2px solid #3F2620; 
+}
+.modal-tab { 
+  border: 2px solid transparent; 
+  border-bottom: 0; 
+  background: transparent; 
+  padding: .5rem 1rem; 
+  border-radius: 14px 14px 0 0; 
+  font-weight: 600; 
+  margin-bottom: -2px; 
+}
+.modal-tab.active { 
+  background: #FFFBF3; 
+  border-color: #3F2620; 
+  border-bottom: 2px solid #FFFBF3; 
+}
+.modal-body { 
+  flex: 1; 
+  overflow: auto; 
+  padding: 1.2rem 1.5rem; 
+  background: #FFFBF3; 
+}
+.modal-sub { 
+  margin: 1.1rem 0 .5rem; 
+  font-size: 1.15rem; 
+}
+.highlights { 
+  display: grid; 
+  gap: .4rem; 
+  margin-bottom: 1rem; 
+} 
+.highlights i { 
+  color: #1E7A46; 
+  margin-right: .4rem; 
+}
+.no-preview { 
+  margin-top: 1rem; 
+  padding: .9rem 1rem; 
+  border-radius: 16px; 
+  background: #FFF6E9; 
+  border: 2px dashed #EBD9C2; 
+  color: #7A6258; 
+}
+.modal-body .activity-card { 
+  box-shadow: none; 
+  background: #FFF6E9; 
+}
+.modal-foot { 
+  display: flex; 
+  justify-content: space-between; 
+  align-items: center; 
+  gap: 1rem; 
+  padding: .9rem 1.5rem; 
+  background: #FFF6E9; 
+  border-top: 2px solid #3F2620; 
+}
+.modal-foot .price { 
+  margin-right: .75rem; 
+}
+.review-summary { 
+  display: flex; 
+  align-items: center; 
+  gap: 1rem; 
+  margin-bottom: .8rem; 
+}
+.big-rating { 
+  font-family: var(--font-display); 
+  font-weight: 800; 
+  font-size: 3.2rem; 
+  line-height: 1; 
+}
+
+/* styling for reviews */
+.review-form { 
+  padding: 1rem; 
+  margin: 1rem 0; 
+  border-radius: 20px; 
+  background: #FFE9A8; 
+}
+.review-form .modal-sub { 
+  margin-top: 0; 
+}
+.review-actions { 
+  display: flex; 
+  align-items: center; 
+  gap: 1rem; 
+  margin-top: .4rem; 
+}
+.review-hint { 
+  padding: .8rem 1rem; 
+  border-radius: 16px; 
+  background: #FFF6E9; 
+  border: 2px dashed #EBD9C2; 
+  margin: 1rem 0; 
+}
+.review-list { 
+  display: grid; 
+  gap: 1rem; 
+  margin-top: 1rem; 
+}
+.review { 
+  display: flex; 
+  gap: .8rem; 
+  padding-bottom: 1rem; 
+  border-bottom: 2px dashed #EBD9C2; 
+}
+.review p { 
+  margin: .2rem 0 0; 
+}
+.review-avatar { 
+  display: inline-grid; 
+  place-items: center; 
+  width: 2.6rem; 
+  height: 2.6rem; 
+  border-radius: 50%; 
+  background: #FFD45C; 
+  font-weight: 700; 
+  flex-shrink: 0; 
+}
+.review-who { 
+  margin: 0 !important; 
+  display: flex; 
+  flex-wrap: wrap; 
+  align-items: center; 
+  gap: .5rem; 
+}
+.role-chip { 
+  font-size: .72rem; 
+  font-weight: 700; 
+  background: #BBDBFF; 
+  border-radius: 999px; 
+  padding: .05rem .55rem; 
+}
+@keyframes fade { 
+  from { opacity: 0; } 
+}
+@keyframes pop { 
+  from { 
+    opacity: 0; 
+    transform: translateY(14px) scale(.98); 
+  } 
+}
