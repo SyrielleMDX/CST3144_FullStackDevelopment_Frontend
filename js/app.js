@@ -109,7 +109,12 @@ const app = Vue.createApp({
             wrongTimer: null,
             rhythmTimers: [],
             audioCtx: null,
-            robotArrows: { up: 'fa-arrow-up', down: 'fa-arrow-down', left: 'fa-arrow-left', right: 'fa-arrow-right' },
+            robotArrows: { 
+                up: 'fa-arrow-up', 
+                down: 'fa-arrow-down', 
+                left: 'fa-arrow-left', 
+                right: 'fa-arrow-right' 
+            },
 
             // notifications
             toast: null,
@@ -143,6 +148,22 @@ const app = Vue.createApp({
     },
 
     computed: Object.assign({}, activityComputed, {
+        navItems() {
+            const items = [
+                { id: 'home', label: 'Home' }, 
+                { id: 'explore', label: 'Explore' }, 
+                { id: 'tryit', label: 'Try It' },
+                { id: 'quiz', label: 'Find your fit' }, 
+                { id: 'teachers', label: 'Teachers' }
+            ];
+            if (this.user) 
+                items.push({ 
+                    id: 'history', 
+                    label: 'My bookings' 
+                });
+            return items;
+        },
+
         // cart
         cartCount() { 
           return this.cart.reduce((sum, item) => sum + item.quantity, 0); 
@@ -208,6 +229,27 @@ const app = Vue.createApp({
         hasFilters() {
             return this.search !== '' || this.category !== 'all' || this.teacherFilter !== '' || this.ageGroup !== 'all';
         },
+
+        popularLessons() {
+            const enrolled = lesson => this.enrolment[lesson._id] || 0;
+            const rating = lesson => (this.ratings[lesson._id] || {}).average || 0;
+
+            const lessons = this.catalogue.slice();
+
+            lessons.sort((a, b) => {
+                if (enrolled(a) !== enrolled(b)) {
+                    return enrolled(b) - enrolled(a);
+                }
+                return rating(b) - rating(a);
+            });
+
+            return lessons.slice(0, 4);
+        },
+
+        // common lessons grid
+        showPicks() { 
+            return !!this.quizResult && this.picks.length > 0; 
+        },
         showGrid() {
             return this.view === 'home'
                 || (this.view === 'explore' && !this.loading && !this.error && this.sortedResults.length > 0)
@@ -272,7 +314,12 @@ const app = Vue.createApp({
                 });
                 const done = items.filter(i => i.done);
                 const strength = done.length ? done.reduce((sum, i) => sum + i.ratio, 0) / done.length : 0;
-                return { cat: cat, items: items, doneCount: done.length, strength: strength };
+                return { 
+                    cat: cat, 
+                    items: items, 
+                    doneCount: done.length, 
+                    strength: strength 
+                };
             });
         },
         discoveryDone() { 
@@ -312,6 +359,17 @@ const app = Vue.createApp({
             return (group ? 'Ages ' + group.label : '') + (fun ? ' - ' + fun.label : '');
         },
 
+        // class window
+        previewCategory() { 
+            return this.previewLesson ? categoryOf(this.previewLesson.topic) : ''; 
+        },
+        reviewAverage() {
+            return this.reviews.length ? this.reviews.reduce((sum, r) => sum + r.rating, 0) / this.reviews.length : 0;
+        },
+        myReviewHere() { 
+            return this.user ? this.reviews.find(r => r.userId === this.user._id) || null : null; 
+        },
+
         // profile
         placesBooked() { 
             return this.myOrders.reduce((s, o) => s + o.items.reduce((n, i) => n + i.quantity, 0), 0); 
@@ -322,6 +380,10 @@ const app = Vue.createApp({
     }),
 
     watch: {
+        search() {
+            clearTimeout(this.searchTimer);
+            this.searchTimer = setTimeout(() => this.loadResults(), 300);   
+        },
         teacherFilter() { 
             this.loadResults(); 
         },
@@ -331,6 +393,9 @@ const app = Vue.createApp({
         },
         currentActivityId() { 
             this.startActivity(); 
+        },
+        previewLesson(lesson) { 
+            document.body.classList.toggle('modal-open', !!lesson); 
         }
     },
 
@@ -386,6 +451,14 @@ const app = Vue.createApp({
                 this.go('explore');
             else if (this.cartCount > 0) 
                 this.go('cart');
+        },
+        openCategory(id) { 
+            this.category = id; 
+            this.go('explore'); 
+        },
+        openAge(id) { 
+            this.ageGroup = id; 
+            this.go('explore'); 
         },
         openChallenge(activityId) { 
             this.activeActivity = activityId; 
@@ -451,10 +524,13 @@ const app = Vue.createApp({
         teacherName(id) {
             const teacher = this.teachers.find(t => t._id === id);
             return teacher ? teacher.firstName + ' ' + teacher.lastName : '';
-        },     
+        },
+        lessonById(id) { 
+          return this.catalogue.find(l => l._id === id) || null; 
+        },
         lessonCountFor(teacherId) { 
           return this.catalogue.filter(l => l.teacherId === teacherId).length; 
-        },  
+        },
         catId(topic) { 
           return categoryOf(topic); 
         },
@@ -512,6 +588,15 @@ const app = Vue.createApp({
         removeLine(lessonId) {
             this.cart = this.cart.filter(i => i.lesson._id !== lessonId);
         },
+        rebook(lessonId) {
+            const lesson = this.lessonById(lessonId);
+            if (lesson && this.availableSpaces(lesson) > 0) {
+                this.addToCart(lesson);
+                this.showToast('Added to your cart', 'fa-basket-shopping');
+            } else {
+                this.showToast('Sorry, that class is fully booked', 'fa-face-frown');
+            }
+        },
 
         // checkout function 
         submitOrder() {
@@ -558,6 +643,20 @@ const app = Vue.createApp({
             }));
         },
 
+        // class popup
+        openPreview(lesson, tab) {
+            this.modalTab = typeof tab === 'string' ? tab : 'about';
+            this.previewLesson = lesson;
+            this.reviews = [];
+            this.reviewForm = { rating: 0, comment: '' };
+            this.reviewError = '';
+            this.reviewSaved = false;
+            this.loadModalReviews();
+            this.$nextTick(() => { if (this.$refs.modalClose) this.$refs.modalClose.focus(); });
+        },
+        closePreview() { 
+            this.previewLesson = null; 
+        },
         loadModalReviews() {
             const lesson = this.previewLesson;
             if (!lesson) 
@@ -590,7 +689,19 @@ const app = Vue.createApp({
                 .catch(err => { this.reviewError = err.message; })
                 .finally(() => { this.reviewBusy = false; });
         },
-
+        tryLesson(lesson) {
+            this.closePreview();
+            this.openChallenge(lesson.previewType);
+        },
+        openTryTab() {
+            this.modalTab = 'try';
+            this.startActivity();
+        },
+        modalLogin() {
+            this.previewLesson = null;
+            this.openAuth('login');
+            this.authReturn = 'history';
+        },
         openTeacher(teacherId) {
             this.view = 'teachers';
             this.menuOpen = false;
@@ -701,9 +812,15 @@ const app = Vue.createApp({
         },
         setUser(user) {
             this.user = user;
-            this.profileForm = { name: user.name, phone: user.phone || '', age: user.age || '' };
-            if (!this.name) this.name = user.name;
-            if (!this.phone) this.phone = user.phone || '';
+            this.profileForm = { 
+                name: user.name, 
+                phone: user.phone || '', 
+                age: user.age || '' 
+            };
+            if (!this.name) 
+                this.name = user.name;
+            if (!this.phone) 
+                this.phone = user.phone || '';
             return Promise.all([this.loadMyOrders(), this.loadMyReviews()]);
         },
         logout() {
